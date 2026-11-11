@@ -1,0 +1,67 @@
+name: CI — CMMI Level 3 Quality Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  cmmi-gate:
+    name: BL-01-INIT quality gates (lint, type-check, TDD coverage)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---- Gate 0: CMMI traceability artifact presence (BL-01-INIT) ----
+      - name: Gate 0 — RTM presence (docs/cmmi/rtm-v3.md)
+        run: |
+          test -f docs/cmmi/rtm-v3.md || { echo "ERROR: docs/cmmi/rtm-v3.md is missing"; exit 1; }
+          echo "OK: docs/cmmi/rtm-v3.md present"
+
+      # ---- Python 3.12 + uv ----
+      - name: Install uv with Python 3.12
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync Python dependencies
+        working-directory: services/sizing-engine
+        run: uv sync
+
+      - name: Gate 1 — Lint (ruff check)
+        working-directory: services/sizing-engine
+        run: uv run ruff check .
+
+      - name: Gate 2 — Type check (mypy --strict)
+        working-directory: services/sizing-engine
+        run: uv run mypy --strict core api tests
+
+      # pytest exit code 5 = "no tests collected"; any non-zero code fails the step,
+      # which enforces "fail automatically when coverage < 95% or when no tests exist".
+      - name: Gate 3 — TDD tests (coverage >= 95%, fail on no tests)
+        working-directory: services/sizing-engine
+        run: uv run pytest
+
+      # ---- Node / pnpm / tsc ----
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Node dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Gate 4 — TypeScript type check (tsc --noEmit)
+        run: |
+          pnpm --filter @rag-architect/db check
+          pnpm --filter @rag-architect/telemetry-worker check
+          pnpm --filter @rag-architect/portal check
