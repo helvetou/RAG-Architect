@@ -58,9 +58,12 @@ jobs:
           cache: pnpm
 
       - name: Install Node dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
-      - name: Gate 4 — TypeScript type check (tsc --noEmit)
+      - name: Gate 4 — TypeScript lint (eslint)
+        run: pnpm lint
+
+      - name: Gate 5 — TypeScript type check (tsc --noEmit)
         run: |
           pnpm --filter @rag-architect/db check
           pnpm --filter @rag-architect/telemetry-worker check
