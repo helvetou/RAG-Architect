@@ -2,7 +2,7 @@
 
 - **Repository:** `/media/malek/DONNEES/pydev/RAG-Architect`
 - **Branch:** `main` @ `104dd83` (5 commits)
-- **Status date:** 2026-11-16
+- **Status date:** 2026-11-18
 
 ## 1. Goal (restated)
 
@@ -53,36 +53,39 @@ Critical path: M1 → M2 → {M3 ∥ M4 ingestion} → M5 → M6.
 - Tests: `packages/db/tests/schema.test.ts` — `TEST-DB-001` (columns) and
   `TEST-DB-002` (seed + FK enforcement) pass.
 
-## 4. Next up — M3 (BL-03-CORE)
+### M3 — BL-03-CORE (complete)
+- `core/calculator.py`, `core/gate.py`, `api/routes.py` (RED → GREEN → REFACTOR).
+- `tests/test_calculator.py`, `test_gate.py`, `test_api.py` — `TEST-MATH-001/002/003`,
+  `TEST-FIN-001`, `TEST-SAFE-001`, `TEST-API-001`.
+- Canonical `aud-gmao-2026-001` vector: chunks 901 313, KV 4.66, vectorDB 1.15,
+  VRAM 10.96, CAPEX 26 458.24 vs OPEX 54 531.94.
+- pytest 8 passed @ 99.39% branch coverage; ruff + mypy --strict clean.
 
-**Entry criterion:** BL-02-DATA signed off (schema committed; formal PPQA
-sign-off to be recorded).
+### M4 — BL-04-TELEM (complete)
+- `core/calibration.py` — 3-loop auto-calibration (Loop 1/2/3).
+- `apps/telemetry-worker/src/index.ts` — event + batch-upload endpoints with
+  Bearer auth + R2 `ctx.waitUntil()` writes.
+- `tests/test_calibration.py` — `TEST-CAL-001`, `TEST-CAL-002`.
+- `apps/telemetry-worker/src/index.test.ts` — `TEST-TEL-001`, `TEST-TEL-002`.
+- pytest 13 passed @ 99.50% branch coverage; vitest 2 passed; tsc + ruff + mypy clean.
 
-TDD sequence (no production code before failing tests):
+## 4. Next up — M5 (BL-05-INTEG)
 
-1. **RED** — commit failing suite referencing `REQ-*`/`TEST-*`:
-   - `services/sizing-engine/tests/test_calculator.py`
-     → `TEST-MATH-001/002/003`, `TEST-FIN-001`
-   - `services/sizing-engine/tests/test_gate.py`
-     → `TEST-SAFE-001`
-   - `services/sizing-engine/tests/test_api.py`
-     → `TEST-API-001`
-   - Run `uv run pytest` and record the failure log (ImportError/AssertionError).
-2. **GREEN** — implement the minimal deterministic code:
-   - `core/calculator.py` — B_active = ceil(35 × 0.40) = 14; KV 4.66 GB;
-     weights 1.85 GB; vectorDB 1.15 GB; reranker 2.00 GB; VRAM total 10.96 GB;
-     chunks 901 313; 3-yr TCO CAPEX 26 458.24 USD vs OPEX cloud 54 531.94 USD
-     → decision `CAPEX_ON_PREM_EDGE`.
-   - `core/gate.py` — block any response lacking `[Manual ID, Section, Page]`
-     or containing an unverified physical quantity (Nm, bar, psi, V, A, °C);
-     message: `"SAFETY GATE BLOCK: Unverified numerical specification or
-     missing citation detected. Consult physical manual directly."`
-   - `api/routes.py` — `POST /api/v1/size-architecture` with Pydantic v2.
-3. **REFACTOR** — NumPy vectorization, `mypy --strict`, ruff clean.
+**Entry criteria:** BL-02-DATA, BL-03-CORE, and BL-04-TELEM signed off.
 
-**Exit criteria (BL-03-CORE):** 100% pass on `TEST-MATH-*`, `TEST-FIN-*`,
-`TEST-SAFE-*`, `TEST-API-*`; ≥95% branch coverage; exact match with the
-reference vector `aud-gmao-2026-001`.
+TDD sequence:
+
+1. **RED** — `apps/portal` Vitest component + Playwright E2E tests
+   (`TEST-UI-001`, `TEST-INT-001`) asserting form validation, air-gapped
+   constraint toggles, and CAPEX-vs-OPEX chart rendering.
+2. **GREEN** — `+page.svelte` multi-step qualification UI, server-side proxy
+   actions to D1 (packages/db) and the sizing engine, TCO/VRAM breakdown views.
+3. **REFACTOR** — WCAG AA contrast for factory tablets, Panasonic Toughbook G2
+   responsive layout.
+
+**Exit criteria (BL-05-INTEG):** zero contract mismatch between Zod/Drizzle and
+Pydantic schemas; Playwright suite green across AIR_GAPPED_EDGE /
+HYBRID_CONNECTED / FULL_CLOUD.
 
 ## 5. Open items / decisions
 
@@ -101,17 +104,17 @@ reference vector `aud-gmao-2026-001`.
   `TEST-UI-*`, `TEST-INT-*`, `TEST-GMP-*` are milestone-level tests beyond the
   frozen 9 requirements (no `REQ-*` conflict) and are retained.
 - **5 untracked files** in the working tree — inspect and decide commit vs ignore.
-- **M4 note:** `REQ-CAL-002` is traced to a portal route
-  (`apps/portal/src/routes/api/batch-upload/+server.ts`) but tested in
-  `services/sizing-engine/tests/test_calibration.py` — verify that cross-tier
-  mapping is intended when M4 starts.
+- **M4 note — RESOLVED (2026-11-18):** `REQ-CAL-002` dual-mode ingestion is
+  implemented and verified in `core/calibration.py` (TEST-CAL-001/002) and the
+  telemetry worker (TEST-TEL-001/002). The RTM's portal-route mapping for the
+  batch-upload endpoint remains for the M5 portal proxy.
 
 
 ## 6. Immediate next actions (checklist)
 
-- [x] Reconcile the M3 reference-vector numbers (single source of truth).
-- [x] Write M3 RED test suite (`test_calculator.py`, `test_gate.py`,
-      `test_api.py`) and record the failing run.
-- [ ] Review the 5 untracked files.
-- [x] Then GREEN → REFACTOR → `uv run pytest --cov=core --cov=api
-      --cov-fail-under=95 --cov-branch`, `ruff check`, `mypy --strict`.
+- [x] M3 (BL-03-CORE): RED → GREEN → REFACTOR — pytest 8/8, ruff, mypy clean.
+- [x] M4 (BL-04-TELEM): RED → GREEN — calibration.py + telemetry worker,
+      pytest 13/13 @ 99.50%, vitest 2/2, tsc/ruff/mypy clean.
+- [ ] Commit M4 work.
+- [ ] Review the 5 untracked `.codewhale/verify-*.sh` files.
+- [ ] Start M5 (BL-05-INTEG): portal UI + 4-tier integration (`TEST-UI-001`, `TEST-INT-001`).
