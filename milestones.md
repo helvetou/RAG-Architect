@@ -61,9 +61,9 @@ Develops the Python 3.12 mathematical microservice (services/sizing-engine) hand
   * **TS & DAR (Decision Analysis and Resolution):** Implement deterministic mathematical models for VRAM headroom (\$20\\%\$), HNSW index overhead (${F}_{index}=1.25$), and RRF hybrid parameters ($k=60$).  
   * **RSKM & VER:** Mitigate RSK-001 (OOM on factory edge) and RSK-002 (numeric hallucination on torque/pressure values) via strict unit verification.  
 * **TDD Execution Scope:**  
-  * **Phase RED:** Commit the complete test suite (tests/test\_calculator.py and tests/test\_gate.py covering TEST-CALC-001 to TEST-CALC-005 and TEST-GATE-001 to TEST-GATE-003) and record the initial failure log (ImportError / AssertionError).  
+  * **Phase RED:** Commit the complete test suite (tests/test\_calculator.py covering TEST-MATH-001 to TEST-MATH-003 and TEST-FIN-001, tests/test\_gate.py covering TEST-SAFE-001, and tests/test\_api.py covering TEST-API-001) and record the initial failure log (ImportError / AssertionError).  
   * **Phase GREEN:**  
-    1. Implement core/calculator.py: concurrency (\$\\lceil 35 \\times 0.40 \\rceil \= 14\$), KV Cache ($4.55GB$), chunk estimation ($550,563chunks$), total VRAM ($10.26GB$), and 3-year TCO ($26,460.83USDCAPEX$ vs $48,950.00USDOPEX$).  
+    1. Implement core/calculator.py: concurrency (\$\\lceil 35 \\times 0.40 \\rceil \= 14\$), KV Cache ($4.66GB$), chunk estimation ($901,313chunks$), total VRAM ($10.96GB$), and 3-year TCO ($26,458.24USDCAPEX$ vs $54,531.94USDOPEX$).  
     2. Implement core/gate.py: regex and AST numeric extractor verifying that every numeric quantity (Nm, bar, V, °C) and SOP citation in generated answers exists verbatim in retrieved parent chunks.  
     3. Implement api/routes.py: FastAPI endpoint POST /api/v1/size-architecture with strict Pydantic v2 models.  
   * **Phase REFACTOR:** Vectorize calculations with NumPy and enforce zero-warning mypy \--strict typing.  
@@ -71,7 +71,7 @@ Develops the Python 3.12 mathematical microservice (services/sizing-engine) hand
   * Containerized Python 3.12 sizing microservice (Dockerfile \+ pyproject.toml managed by uv).  
   * JUnit XML test report and coverage artifact.  
 * **Exit Criteria & PPQA Gate (BL-03-CORE):**  
-  * 100% pass rate on TEST-CALC-\* and TEST-GATE-\* with \$\\ge 95\\%\$ branch coverage.  
+  * 100% pass rate on TEST-MATH-\*, TEST-FIN-\*, TEST-SAFE-\*, and TEST-API-\* with \$\\ge 95\\%\$ branch coverage.  
   * Exact numerical match with the reference JSON specification (aud-gmao-2026-001).
 
 ### **Milestone 4 (M4): Telemetry Ingestion Pipeline & Closed-Loop Auto-Calibration (Days 16–21)**
@@ -83,7 +83,7 @@ Builds the Cloudflare Worker ingestion service (apps/telemetry-worker), the offl
   * **TS & PI (Product Integration):** Implement dual-mode ingestion (real-time HTTP streaming to Cloudflare R2 for connected plants; signed JSONL batch upload for AIR\_GAPPED\_EDGE plants).  
   * **VER:** Verify asynchronous 5% RAGAS sampling so edge inference latency (TTFT $\leq 1.5s$) is never impacted by evaluation overhead.  
 * **TDD Execution Scope:**  
-  * **Phase RED:** Commit tests/test\_calibration.py (TEST-CAL-001 to TEST-CAL-003) and Worker unit tests (TEST-TEL-001, TEST-TEL-002).  
+  * **Phase RED:** Commit tests/test\_calibration.py (TEST-CAL-001 and TEST-CAL-002) and Worker unit tests (TEST-TEL-001, TEST-TEL-002).  
   * **Phase GREEN:**  
     1. Implement apps/telemetry-worker/src/index.ts for POST /api/v1/telemetry/event and POST /api/v1/telemetry/batch-upload with Bearer token validation and non-blocking ctx.waitUntil() R2 writes.  
     2. Implement services/sizing-engine/core/calibration.py executing Loop 1 (\$+20\\%\$ compute scaling if P95 TTFT $>1500ms$ or VRAM \$\> 90\\%\$), Loop 2 (\$-20\\%\$ child chunk size if Context Recall $<0.75$), and Loop 3 (Semantic Router provisioning if cloud token spend exceeds baseline by \$\> 15\\%\$).  

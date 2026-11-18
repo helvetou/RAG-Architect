@@ -304,7 +304,7 @@ $$
 \text{TCO}_{\text{OPEX}} = \sum_{m=1}^{36} \left[ \left( \frac{S_{\text{in}} \times \text{Price}_{\text{in\_1M}} + S_{\text{out}} \times \text{Price}_{\text{out\_1M}}}{10^6} \right) \times \text{Volume}_{\text{monthly}} + \text{CloudVectorHost}_{\text{monthly}} \right]
 $$
 
-*(Where baseline $S_{\text{in}} = 5400\text{ tokens}$, $S_{\text{out}} = 400\text{ tokens}$, $\text{Price}_{\text{in\_1M}} = \$3.00$, $\text{Price}_{\text{out\_1M}} = \$15.00$, and $\text{CloudVectorHost}_{\text{monthly}} = \$451.84/mo$ for dedicated HA enterprise vector clusters, yielding $\$1,503.33/\text{mo}$ or $\$54,120.00$ over 36 months).*
+*(Where baseline $S_{\text{in}} = 5400\text{ tokens}$, $S_{\text{out}} = 400\text{ tokens}$, $\text{Price}_{\text{in\_1M}} = \$3.00$, $\text{Price}_{\text{out\_1M}} = \$15.00$, and $\text{CloudVectorHost}_{\text{monthly}} = \$451.84/mo$ for dedicated HA enterprise vector clusters, yielding $\$1,514.78/\text{mo}$ or $\$54,531.94$ over 36 months).*
 
 ---
 
@@ -362,13 +362,13 @@ The system communicates through strict REST JSON endpoints validated via Pydanti
       "embedding_model_id": "bge-m3-industrial",
       "reranker_model_id": "bge-reranker-base",
       "weights_vram_gb": 1.85,
-      "kv_cache_allocated_gb": 4.55,
-      "vector_db_vram_gb": 0.70,
-      "total_vram_required_gb": 10.38,
+      "kv_cache_allocated_gb": 4.66,
+      "vector_db_vram_gb": 1.15,
+      "total_vram_required_gb": 10.96,
       "max_concurrent_streams": 14
     },
     "rag_parameters": {
-      "estimated_total_child_chunks": 550563,
+      "estimated_total_child_chunks": 901313,
       "chunking_strategy": "PARENT_CHILD_SEMANTIC",
       "child_chunk_size_tokens": 200,
       "parent_chunk_size_tokens": 1000,
@@ -380,16 +380,16 @@ The system communicates through strict REST JSON endpoints validated via Pydanti
     },
     "tco_3year_comparison": {
       "hardware_capex_usd": 16420.00,
-      "energy_and_maint_3yr_usd": 10040.83,
-      "capex_edge_total_usd": 26460.83,
-      "opex_cloud_total_usd": 54120.00,
-      "net_savings_usd": 27659.17,
+      "energy_and_maint_3yr_usd": 10038.24,
+      "capex_edge_total_usd": 26458.24,
+      "opex_cloud_total_usd": 54531.94,
+      "net_savings_usd": 28073.70,
       "recommended_decision": "CAPEX_ON_PREM_EDGE"
     }
   }
 }
 ```
-*(Mathematical audit trace of exact values: $P_{\text{model}}=3.21\text{B}$ at $4\text{-bit} \implies \text{VRAM}_{\text{Weights}} = 3.21 \times 0.5 \times 1.15 = 1.84575 \approx 1.85\text{ GB}$; $\text{VRAM}_{\text{KV Cache}} = 2 \times 14 \times 5800 \times 28 \times 8 \times 128 \times 1 / 10^9 = 4.54713 \approx 4.55\text{ GB}$; $N_{\text{chunks}} = 550\,563 \implies \text{VRAM}_{\text{VectorDB}} = 550563 \times 1024 \times 1 \times 1.25 / 10^9 = 0.70472 \approx 0.70\text{ GB}$; $\text{VRAM}_{\text{Headroom}} = 0.20 \times (1.84575 + 4.54713) = 1.27858\text{ GB}$; $\text{VRAM}_{\text{Total}} = 1.84575 + 4.54713 + 0.70472 + 2.0 + 1.27858 = 10.37618 \approx 10.38\text{ GB}$).*
+*(Mathematical audit trace of exact values: $P_{\text{model}}=3.21\text{B}$ at $4\text{-bit} \implies \text{VRAM}_{\text{Weights}} = 3.21 \times 0.5 \times 1.15 = 1.84575 \approx 1.85\text{ GB}$; $\text{VRAM}_{\text{KV Cache}} = 2 \times 14 \times 5800 \times 28 \times 8 \times 128 \times 1 / 10^9 = 4.65633 \approx 4.66\text{ GB}$; $N_{\text{chunks}} = 901\,313 \implies \text{VRAM}_{\text{VectorDB}} = 901313 \times 1024 \times 1 \times 1.25 / 10^9 = 1.15368 \approx 1.15\text{ GB}$; $\text{VRAM}_{\text{Headroom}} = 0.20 \times (1.84575 + 4.65633) = 1.30042\text{ GB}$; $\text{VRAM}_{\text{Total}} = 1.84575 + 4.65633 + 1.15368 + 2.0 + 1.30042 = 10.95618 \approx 10.96\text{ GB}$).*
 
 ### 6.2 Telemetry Ingestion Endpoints (`REQ-CAL-002`)
 
@@ -571,8 +571,8 @@ def test_req_math_001_active_streams_and_kv_cache(llama_3_2_3b_q4: ModelSpec) ->
         sequence_length=5800,
         model=llama_3_2_3b_q4,
     )
-    # Exact: 2 * 14 * 5800 * 28 * 8 * 128 * (8/8) / 1e9 = 4.54713344 GB -> 4.55 GB
-    assert round(kv_cache_gb, 2) == 4.55
+    # Exact: 2 * 14 * 5800 * 28 * 8 * 128 * (8/8) / 1e9 = 4.6563328 GB -> 4.66 GB
+    assert round(kv_cache_gb, 2) == 4.66
 
 
 def test_req_math_002_document_to_chunk_conversion() -> None:
@@ -586,7 +586,7 @@ def test_req_math_002_document_to_chunk_conversion() -> None:
     total_chunks = compute_total_child_chunks(docs)
     # Manuals: 85 * 2500 * 420 = 89,250,000 tokens
     # Work orders: 450,000 * 150 = 67,500,000 tokens
-    # Total tokens: 156,750,000 -> (156,750,000 / 200) * 1.15 = 901,312.5 or 550,563 depending on WO indexing
+    # Total tokens: 156,750,000 -> (156,750,000 / 200) * 1.15 = 901,312.5
     # Note: Using standard formula ceil(((85*2500*420 + 450000*150) / 200) * 1.15) = 901313
     # Wait: If average_tokens_per_page=420 and 1000 pages/GB or 2500 pages/GB:
     assert total_chunks > 0
@@ -599,21 +599,21 @@ def test_req_math_003_total_vram_allocation(llama_3_2_3b_q4: ModelSpec) -> None:
         model=llama_3_2_3b_q4,
         active_streams=14,
         sequence_length=5800,
-        total_child_chunks=550563,
+        total_child_chunks=901313,
         calibration_multiplier=1.0,
     )
     assert round(vram.weights_vram_gb, 2) == 1.85
-    assert round(vram.kv_cache_vram_gb, 2) == 4.55
-    assert round(vram.vector_db_vram_gb, 2) == 0.70
+    assert round(vram.kv_cache_vram_gb, 2) == 4.66
+    assert round(vram.vector_db_vram_gb, 2) == 1.15
     assert round(vram.reranker_vram_gb, 2) == 2.00
-    assert round(vram.total_vram_required_gb, 2) == 10.38
+    assert round(vram.total_vram_required_gb, 2) == 10.96
 
 
 def test_req_fin_001_three_year_tco(rugged_l4_24g: HardwareSpec) -> None:
     """TEST-FIN-001: Verify 36-month CAPEX vs Cloud OPEX TCO calculation."""
     tco = compute_3year_tco(
         hardware=rugged_l4_24g,
-        total_vram_required_gb=10.38,
+        total_vram_required_gb=10.96,
         safety_critical=True,
         technicians_per_shift=35,
         total_shifts=3,
@@ -622,10 +622,10 @@ def test_req_fin_001_three_year_tco(rugged_l4_24g: HardwareSpec) -> None:
     )
     assert tco.recommended_quantity == 2  # HA redundancy enforced by safety_critical=True
     assert round(tco.hardware_capex_usd, 2) == 16420.00
-    assert round(tco.energy_and_maint_3yr_usd, 2) == 10040.83
-    assert round(tco.capex_edge_total_usd, 2) == 26460.83
-    assert round(tco.opex_cloud_total_usd, 2) == 54120.00
-    assert round(tco.net_savings_usd, 2) == 27659.17
+    assert round(tco.energy_and_maint_3yr_usd, 2) == 10038.24
+    assert round(tco.capex_edge_total_usd, 2) == 26458.24
+    assert round(tco.opex_cloud_total_usd, 2) == 54531.94
+    assert round(tco.net_savings_usd, 2) == 28073.70
     assert tco.recommended_decision == "CAPEX_ON_PREM_EDGE"
 ```
 

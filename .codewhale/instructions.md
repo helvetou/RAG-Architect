@@ -45,8 +45,8 @@ Aucun code de production ne peut être écrit avant son test en échec (`TEST-*`
 ## 7. Invariants de calcul (vecteur de référence `aud-gmao-2026-001`)
 
 - Streams actifs : `B_active = ceil(N_techs × R_peak)` = 14 (pour 35 techs × 0.40).
-- KV Cache : 4.55 GB ; Weights : 1.85 GB ; VectorDB : 0.70 GB ; Reranker : 2.00 GB ; VRAM totale : 10.38 GB.
-- Chunks enfants : 550 563 ; TCO 3 ans CAPEX edge 26 460.83 USD vs OPEX cloud 54 120.00 USD → décision `CAPEX_ON_PREM_EDGE`.
+- KV Cache : 4.66 GB ; Weights : 1.85 GB ; VectorDB : 1.15 GB ; Reranker : 2.00 GB ; VRAM totale : 10.96 GB.
+- Chunks enfants : 901 313 ; TCO 3 ans CAPEX edge 26 458.24 USD vs OPEX cloud 54 531.94 USD → décision `CAPEX_ON_PREM_EDGE`.
 
 ## 8. Gate zéro-hallucination (`REQ-SAFE-001`)
 
