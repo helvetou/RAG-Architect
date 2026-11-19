@@ -8,7 +8,7 @@ on:
 
 jobs:
   cmmi-gate:
-    name: BL-01-INIT quality gates (lint, type-check, TDD coverage)
+    name: BL-01..BL-04 quality gates (lint, type-check, TDD coverage)
     runs-on: ubuntu-latest
 
     steps:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Sync Python dependencies
         working-directory: services/sizing-engine
-        run: uv sync
+        run: uv sync --frozen
 
       - name: Gate 1 — Lint (ruff check)
         working-directory: services/sizing-engine
@@ -43,9 +43,24 @@ jobs:
       # which enforces "fail automatically when coverage < 95% or when no tests exist".
       - name: Gate 3 — TDD tests (coverage >= 95%, fail on no tests)
         working-directory: services/sizing-engine
-        run: uv run pytest
+        run: >
+          uv run pytest --cov=core --cov=api --cov-branch --cov-fail-under=95
+          --junitxml=reports/junit.xml
+          --cov-report=xml:reports/coverage.xml
+          --cov-report=html:reports/htmlcov
 
-      # ---- Node / pnpm / tsc ----
+      - name: Archive Python test & coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sizing-engine-reports
+          path: |
+            services/sizing-engine/reports/junit.xml
+            services/sizing-engine/reports/coverage.xml
+            services/sizing-engine/reports/htmlcov
+          if-no-files-found: ignore
+
+      # ---- Node / pnpm / tsc / drizzle ----
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -68,3 +83,12 @@ jobs:
           pnpm --filter @rag-architect/db check
           pnpm --filter @rag-architect/telemetry-worker check
           pnpm --filter @rag-architect/portal check
+
+      - name: Gate 6 — Database tests (vitest)
+        run: pnpm --filter @rag-architect/db test
+
+      - name: Gate 7 — Schema drift check (drizzle-kit check)
+        run: pnpm --filter @rag-architect/db run db:check
+
+      - name: Gate 8 — Telemetry worker tests (vitest + benchmark)
+        run: pnpm --filter @rag-architect/telemetry-worker test
