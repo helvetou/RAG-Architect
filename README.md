@@ -22,7 +22,7 @@ strict **Test-Driven Development (Red-Green-Refactor)**.
 | M2 — D1 schema + catalog seed | `BL-02-DATA` | ✅ Complete |
 | M3 — Sizing engine + safety gate | `BL-03-CORE` | ✅ Complete |
 | M4 — Telemetry worker + calibration | `BL-04-TELEM` | ✅ Complete |
-| M5 — Portal + 4-tier integration | `BL-05-INTEG` | ⏳ Pending |
+| M5 — Portal + 4-tier integration | `BL-05-INTEG` | ✅ Complete |
 | M6 — GMP qualification, FCA/PCA | `BL-06-REL-1.0` | ⏳ Pending |
 
 ## Repository layout

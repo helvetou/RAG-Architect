@@ -73,23 +73,32 @@ Critical path: M1 → M2 → {M3 ∥ M4 ingestion} → M5 → M6.
   anti-spoofing + GMP units (TEST-SAFE-001d/e/f), calibration 5% RAGAS sampling
   + `.jsonl.gz` parsing, FP16 KV test, Dockerfile + CI artifact/gates.
 
-## 4. Next up — M5 (BL-05-INTEG)
+### M5 — BL-05-INTEG (complete)
+- `apps/portal` — SvelteKit 2 + Svelte 5 + Tailwind 4 portal (`+page.svelte`,
+  `SizeAuditForm.svelte`, TCO/VRAM rendering).
+- `src/routes/api/audit/+server.ts` — 4-tier BFF (D1 catalog read RSK-004 →
+  sizing engine → 21 CFR append-only `audit_submissions` persist).
+- `src/routes/api/batch-upload/+server.ts` — worker proxy (SHA-256 + Bearer).
+- `src/lib/schemas.ts` (Zod contract), `src/lib/audit.ts` (SHA-256 audit trail).
+- Tests: `TEST-UI-001` (Vitest), `TEST-INT-001` (contract + Playwright E2E).
+- vitest 8/8; svelte-check 0; vite build ok; Playwright 12/12 (3 modes ×
+  chromium/toughbook-landscape/toughbook-portrait + batch proxy).
 
-**Entry criteria:** BL-02-DATA, BL-03-CORE, and BL-04-TELEM signed off.
+## 4. Next up — M6 (BL-06-REL-1.0)
 
-TDD sequence:
+**Entry criteria:** BL-05-INTEG signed off.
 
-1. **RED** — `apps/portal` Vitest component + Playwright E2E tests
-   (`TEST-UI-001`, `TEST-INT-001`) asserting form validation, air-gapped
-   constraint toggles, and CAPEX-vs-OPEX chart rendering.
-2. **GREEN** — `+page.svelte` multi-step qualification UI, server-side proxy
-   actions to D1 (packages/db) and the sizing engine, TCO/VRAM breakdown views.
-3. **REFACTOR** — WCAG AA contrast for factory tablets, Panasonic Toughbook G2
-   responsive layout.
+GMP qualification (Projet 04) + FCA/PCA + release 1.0:
 
-**Exit criteria (BL-05-INTEG):** zero contract mismatch between Zod/Drizzle and
-Pydantic schemas; Playwright suite green across AIR_GAPPED_EDGE /
-HYBRID_CONNECTED / FULL_CLOUD.
+1. **RED** — golden non-regression suite `TEST-GMP-001…004` (100% factual
+   accuracy, immutable 21 CFR Part 11 audit trail).
+2. **GREEN** — execute IQ/OQ/PQ against the reference dataset (SIP/CIP,
+   torque tables, gowning SOPs).
+3. **FCA/PCA** — verify every RTM test green + Docker images / D1 migrations /
+   docs match the repository tag.
+
+**Exit criteria (BL-06-REL-1.0):** 100% RTM matrix green (≥95% coverage),
+zero open Critical/High defects, production sign-off.
 
 ## 5. Open items / decisions
 
@@ -121,4 +130,6 @@ HYBRID_CONNECTED / FULL_CLOUD.
 - [x] Commit M4 work (`489e52e`) + track verify scripts (`80ca7d7`).
 - [x] Phase A audit remediation (AUD-01/03/07): worker signature+scheduled,
       gate hardening, calibration sampling/parsing, FP16 test, Dockerfile+CI.
-- [ ] Start M5 (BL-05-INTEG) — only after Phase A exit gate + explicit approval.
+- [x] M5 (BL-05-INTEG): RED → GREEN → REFACTOR → exit gate — vitest 8/8,
+      svelte-check 0, Playwright 12/12, tag BL-05-INTEG.
+- [ ] Start M6 (BL-06-REL-1.0) — only after explicit approval.

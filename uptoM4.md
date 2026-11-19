@@ -58,7 +58,7 @@ HEAD (Phase A exit report). Annotated tags: `BL-01-INIT`, `BL-02-DATA`,
 | `REQ-API-001` | P0 | `TEST-API-001` | `services/sizing-engine/tests/test_api.py` | ✅ |
 | `REQ-SAFE-001` | P0 | `TEST-SAFE-001` | `services/sizing-engine/tests/test_gate.py` | ✅ |
 | `REQ-CAL-001` | P1 | `TEST-CAL-001` | `services/sizing-engine/tests/test_calibration.py` | ✅ |
-| `REQ-CAL-002` | P1 | `TEST-CAL-002` | `services/sizing-engine/tests/test_calibration.py` | 🟡 Partiel (Core + Worker ✅; proxy Portal M5 pending) |
+| `REQ-CAL-002` | P1 | `TEST-CAL-002` | `services/sizing-engine/tests/test_calibration.py` | ✅ |
 
 Traceability completeness: **9 / 9 (100%)**. No `REQ-*` exists without a mapped `TEST-*`.
 
