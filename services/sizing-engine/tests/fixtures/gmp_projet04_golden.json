@@ -1,0 +1,188 @@
+{
+  "audit_id": "gmp-projet04-2026-001",
+  "spec_version": "SPEC-GMAO-RAG-ARCH-003",
+  "cases": [
+    {
+      "id": "SIP-CIP-001-valid-sterilization",
+      "domain": "sip_cip",
+      "parent_chunks": [
+        {
+          "text": "SOP CIP-01 Section 3.2 Page 7: Sterilize at 121.5 °C, hold 30 min, pressure 2.1 bar, flow 120 L/min.",
+          "manual_id": "CIP-01",
+          "section": "3.2",
+          "page": "7"
+        }
+      ],
+      "candidate": "According to [Manual CIP-01, Section 3.2, Page 7], sterilize at 121.5 °C for 30 min at 2.1 bar and 120 L/min.",
+      "expected_safe": true
+    },
+    {
+      "id": "SIP-CIP-002-valid-cip",
+      "domain": "sip_cip",
+      "parent_chunks": [
+        {
+          "text": "SOP CIP-01 Section 4.1 Page 9: Rinse cycle at 85 °C, hold 15 min, pressure 300 kPa.",
+          "manual_id": "CIP-01",
+          "section": "4.1",
+          "page": "9"
+        }
+      ],
+      "candidate": "According to [Manual CIP-01, Section 4.1, Page 9], rinse at 85 °C for 15 min at 300 kPa.",
+      "expected_safe": true
+    },
+    {
+      "id": "SIP-CIP-003-altered-temperature",
+      "domain": "sip_cip",
+      "parent_chunks": [
+        {
+          "text": "SOP CIP-01 Section 3.2 Page 7: Sterilize at 121.5 °C, hold 30 min.",
+          "manual_id": "CIP-01",
+          "section": "3.2",
+          "page": "7"
+        }
+      ],
+      "candidate": "According to [Manual CIP-01, Section 3.2, Page 7], sterilize at 131.5 °C for 30 min.",
+      "expected_safe": false
+    },
+    {
+      "id": "SIP-CIP-004-altered-duration",
+      "domain": "sip_cip",
+      "parent_chunks": [
+        {
+          "text": "SOP CIP-01 Section 3.2 Page 7: Sterilize at 121.5 °C, hold 30 min.",
+          "manual_id": "CIP-01",
+          "section": "3.2",
+          "page": "7"
+        }
+      ],
+      "candidate": "According to [Manual CIP-01, Section 3.2, Page 7], sterilize at 121.5 °C for 45 min.",
+      "expected_safe": false
+    },
+    {
+      "id": "SIP-CIP-005-missing-citation",
+      "domain": "sip_cip",
+      "parent_chunks": [
+        {
+          "text": "SOP CIP-01 Section 3.2 Page 7: Sterilize at 121.5 °C for 30 min.",
+          "manual_id": "CIP-01",
+          "section": "3.2",
+          "page": "7"
+        }
+      ],
+      "candidate": "You should sterilize at 121.5 °C for 30 min.",
+      "expected_safe": false
+    },
+    {
+      "id": "FLANGE-001-valid-range",
+      "domain": "flange_torque",
+      "parent_chunks": [
+        {
+          "text": "SOP FLG-02 Section 5.1 Page 12: Torque flange bolts to 10-15 Nm.",
+          "manual_id": "FLG-02",
+          "section": "5.1",
+          "page": "12"
+        }
+      ],
+      "candidate": "According to [Manual FLG-02, Section 5.1, Page 12], torque flange bolts to 10-15 Nm.",
+      "expected_safe": true
+    },
+    {
+      "id": "FLANGE-002-valid-comma-decimal",
+      "domain": "flange_torque",
+      "parent_chunks": [
+        {
+          "text": "SOP FLG-02 Section 5.2 Page 13: Do not exceed 12,5 daNm.",
+          "manual_id": "FLG-02",
+          "section": "5.2",
+          "page": "13"
+        }
+      ],
+      "candidate": "According to [Manual FLG-02, Section 5.2, Page 13], do not exceed 12,5 daNm.",
+      "expected_safe": true
+    },
+    {
+      "id": "FLANGE-003-valid-n-m",
+      "domain": "flange_torque",
+      "parent_chunks": [
+        {
+          "text": "SOP FLG-02 Section 6.0 Page 14: Tighten to 80 N.m (or 80 N·m).",
+          "manual_id": "FLG-02",
+          "section": "6.0",
+          "page": "14"
+        }
+      ],
+      "candidate": "According to [Manual FLG-02, Section 6.0, Page 14], tighten to 80 N·m.",
+      "expected_safe": true
+    },
+    {
+      "id": "FLANGE-004-altered-torque",
+      "domain": "flange_torque",
+      "parent_chunks": [
+        {
+          "text": "SOP FLG-02 Section 5.1 Page 12: Torque flange bolts to 10-15 Nm.",
+          "manual_id": "FLG-02",
+          "section": "5.1",
+          "page": "12"
+        }
+      ],
+      "candidate": "According to [Manual FLG-02, Section 5.1, Page 12], torque flange bolts to 20-25 Nm.",
+      "expected_safe": false
+    },
+    {
+      "id": "FLANGE-005-spoofed-citation",
+      "domain": "flange_torque",
+      "parent_chunks": [
+        {
+          "text": "SOP FLG-02 Section 5.1 Page 12: Torque flange bolts to 10-15 Nm.",
+          "manual_id": "FLG-02",
+          "section": "5.1",
+          "page": "12"
+        }
+      ],
+      "candidate": "According to [Manual FLG-99, Section 9.9, Page 99], torque flange bolts to 10-15 Nm.",
+      "expected_safe": false
+    },
+    {
+      "id": "CLEANROOM-001-valid-gowning",
+      "domain": "cleanroom_gowning",
+      "parent_chunks": [
+        {
+          "text": "SOP CR-03 Section 2.1 Page 4: ISO 7 cleanroom, particle threshold 0.5 µm, differential pressure 15 Pa.",
+          "manual_id": "CR-03",
+          "section": "2.1",
+          "page": "4"
+        }
+      ],
+      "candidate": "According to [Manual CR-03, Section 2.1, Page 4], maintain ISO 7 cleanroom with 0.5 µm threshold and 15 Pa differential pressure.",
+      "expected_safe": true
+    },
+    {
+      "id": "CLEANROOM-002-altered-pressure",
+      "domain": "cleanroom_gowning",
+      "parent_chunks": [
+        {
+          "text": "SOP CR-03 Section 2.1 Page 4: differential pressure 15 Pa.",
+          "manual_id": "CR-03",
+          "section": "2.1",
+          "page": "4"
+        }
+      ],
+      "candidate": "According to [Manual CR-03, Section 2.1, Page 4], maintain differential pressure 30 Pa.",
+      "expected_safe": false
+    },
+    {
+      "id": "CLEANROOM-003-missing-citation",
+      "domain": "cleanroom_gowning",
+      "parent_chunks": [
+        {
+          "text": "SOP CR-03 Section 2.1 Page 4: differential pressure 15 Pa.",
+          "manual_id": "CR-03",
+          "section": "2.1",
+          "page": "4"
+        }
+      ],
+      "candidate": "Maintain differential pressure 15 Pa in the cleanroom.",
+      "expected_safe": false
+    }
+  ]
+}

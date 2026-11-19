@@ -1,0 +1,16 @@
+name = "telemetry-worker"
+main = "src/index.ts"
+compatibility_date = "2026-11-19"
+
+[[r2_buckets]]
+binding = "TELEMETRY_BUCKET"
+bucket_name = "telemetry-bucket"
+preview_bucket_name = "telemetry-bucket-preview"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rag-architect-db"
+database_id = "CHANGE_ME"
+
+[triggers]
+crons = ["0 3 * * *"]
