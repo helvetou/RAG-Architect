@@ -55,3 +55,6 @@ Desktop.ini
 
 # ---- Codewhale agent runtime state ----
 .codewhale/state/
+test-results/
+playwright-report/
+.svelte-kit/

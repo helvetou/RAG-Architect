@@ -2,7 +2,7 @@
 // Traceability: REQ-API-001 (portal side), M5 contract-first integration.
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 import {
   concurrencySchema,
@@ -13,10 +13,7 @@ import {
 } from './schemas';
 
 const openapi = JSON.parse(
-  readFileSync(
-    fileURLToPath(new URL('../../../../packages/contracts/openapi.json', import.meta.url)),
-    'utf8'
-  )
+  readFileSync(path.resolve(process.cwd(), '../../packages/contracts/openapi.json'), 'utf8')
 ) as {
   components: {
     schemas: Record<string, { properties: Record<string, unknown> }>;
