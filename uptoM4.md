@@ -32,8 +32,14 @@ and screens generated answers through a deterministic zero-hallucination gate.
 | `BL-03-CORE` | M3 — Sizing engine + zero-hallucination gate | `6fc95b6` | ✅ |
 | `BL-04-TELEM` | M4 — Telemetry worker + auto-calibration | `489e52e` | ✅ |
 
-Full history (oldest → newest): `f91dc09` → `97b661e` → `ac21693` → `6ecb9f2`
-→ `104dd83` → `6fc95b6` → `489e52e`.
+Full history (oldest → newest, through Phase A):
+`f91dc09` (BL-01-INIT) → `97b661e` (uv.lock) → `ac21693` (pnpm-lock) →
+`6ecb9f2` (eslint gate) → `104dd83` (BL-02-DATA) → `6fc95b6` (BL-03-CORE) →
+`489e52e` (BL-04-TELEM) → `80ca7d7` (verify scripts) → `ac650bd` (audit package)
+→ `5cfdb99` (AUD-01 worker) → `a22906f` (AUD-03 gate) → `11a3dc8` (AUD-07 CI)
+→ `c9d3c94` (CR-001/CM) → `8d2706a` (AUD-10) → `fe95f6f` (migration meta) →
+HEAD (Phase A exit report). Annotated tags: `BL-01-INIT`, `BL-02-DATA`,
+`BL-03-CORE`, `BL-04-TELEM`.
 
 ---
 
@@ -194,18 +200,25 @@ Cloudflare Worker with Bearer-token authorization and non-blocking
 | `TEST-TEL-001` | worker event | `apps/telemetry-worker/src/index.test.ts` | ✅ |
 | `TEST-TEL-002` | worker auth/batch | `apps/telemetry-worker/src/index.test.ts` | ✅ |
 
-### 8.2 Verification results (2026-11-19)
+### 8.2 Verification results (2026-11-19, Phase A exit gate)
 
 Python sizing engine (`services/sizing-engine`):
 
-- `pytest --cov=core --cov=api --cov-fail-under=95 --cov-branch` → **13 passed, 99.50% branch coverage** (≥95% required).
-- `ruff check core api tests` → **clean**.
+- `pytest --cov=core --cov=api --cov-branch --cov-fail-under=95 --junitxml=reports/junit.xml` → **19 passed, 99.14% branch coverage** (≥95% required).
+- `ruff check .` → **clean**.
 - `mypy --strict core api tests` → **Success (11 files)**.
 
 Telemetry worker (`apps/telemetry-worker`):
 
-- `vitest run` → **2 passed**.
+- `vitest run` → **5 passed** (4 functional + 1 p99 benchmark).
 - `tsc --noEmit` → **clean**.
+- Ingestion p99 benchmark → **1.146 ms < 15 ms**.
+
+Database (`packages/db`):
+
+- `vitest run` → **7 passed**.
+- `tsc --noEmit` → **clean**.
+- `drizzle-kit check` → **zero drift**.
 
 ---
 
