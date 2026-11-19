@@ -26,6 +26,16 @@ blanche), avec vérification 21 CFR Part 11 et zero-hallucination (`RSK-001`).
 | Manifest Portal (`svelte.config.js`) | ✅ `adapter-cloudflare` |
 | Zéro-drift Drizzle | ✅ migrations `0000`/`0001` + `meta/_journal.json` présents |
 
+### 2.1 Vérification Docker hôte (PCA)
+
+| Vérification | Résultat |
+| :--- | :--- |
+| Image | `localhost/rag-architect-sizing:1.0.0` |
+| Image ID (SHA-256) | `sha256:f896b500c045cfa3003a61737a38529a4980c1d4af5d67e09665908827aa99f6` |
+| Runtime user | non-root `uid=10001(appuser) gid=10001(appuser)` |
+| Smoke test | `GET /openapi.json` → HTTP 200, `/api/v1/size-architecture` exposée (`SMOKE_TEST=PASS`) |
+| Date | 2026-11-19 |
+
 ## 3. Operational Qualification (OQ) — `TEST-GMP-002` (100 % factual accuracy)
 
 13 cas Golden exécutés contre `core/gate.py` :

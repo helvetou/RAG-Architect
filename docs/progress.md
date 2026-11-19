@@ -132,5 +132,4 @@ zero open Critical/High defects, production sign-off.
       gate hardening, calibration sampling/parsing, FP16 test, Dockerfile+CI.
 - [x] M5 (BL-05-INTEG): RED → GREEN → REFACTOR → exit gate — vitest 8/8,
       svelte-check 0, Playwright 12/12, tag BL-05-INTEG.
-- [x] M6 (BL-06-REL-1.0) qualification: TEST-GMP-001..004 green, golden SHA-256
-      verified, FCA/PCA docs, CI 4-tier lock — awaiting host Docker build + tag.
+- [x] M6 (BL-06-REL-1.0): TEST-GMP-001..004 green + host Docker PCA validated + BL-06-REL-1.0 tagged.

@@ -48,9 +48,11 @@ p99 — tous ✅.
 | Manifeste SHA-256 critique | `gmp_projet04_golden.json` = `250e43a47dae2d614e0459a70e6d7775fcf4261c92e9a9c815a200d36d0a2e96` |
 | Artefacts déploiement | `services/sizing-engine/Dockerfile`, `apps/telemetry-worker/wrangler.toml`, `apps/portal/svelte.config.js` |
 
-> **Vérification Docker finale (clôture PCA) :** le `docker build` du Sizing Engine
-> et le déploiement Worker/Portal doivent être exécutés sur la **machine hôte**
-> (réseau disponible) avant la pose du tag de release officiel `BL-06-REL-1.0`.
+> **Vérification Docker finale (PCA hôte) — VALIDÉE (2026-11-19) :**
+> image `localhost/rag-architect-sizing:1.0.0`, Image ID
+> `sha256:f896b500c045cfa3003a61737a38529a4980c1d4af5d67e09665908827aa99f6`,
+> runtime non-root `uid=10001(appuser) gid=10001(appuser)`,
+> `GET /openapi.json` → HTTP 200 (`SMOKE_TEST=PASS`).
 
 ## 3. Organizational Process Focus (OPF) — leçons apprises
 
@@ -67,6 +69,5 @@ p99 — tous ✅.
 
 ## 4. Décision
 
-FCA ✅ conforme (RTM 9/9, 0 défaut Critique/Élevé). PCA ✅ sous réserve du
-`docker build` hôte final. **Release 1.0 prête pour sign-off** — tag
-`BL-06-REL-1.0` à poser par le Release Manager après le build hôte.
+FCA ✅ conforme (RTM 9/9, 0 défaut Critique/Élevé). PCA ✅ conforme (Docker hôte
+validé, `SMOKE_TEST=PASS`). **Release 1.0 signée** — tag `BL-06-REL-1.0`.
