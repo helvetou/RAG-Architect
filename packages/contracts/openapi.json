@@ -1,0 +1,215 @@
+{
+  "components": {
+    "schemas": {
+      "Concurrency": {
+        "properties": {
+          "avg_queries_per_tech_shift": {
+            "title": "Avg Queries Per Tech Shift",
+            "type": "integer"
+          },
+          "peak_shift_overlap_ratio": {
+            "title": "Peak Shift Overlap Ratio",
+            "type": "number"
+          },
+          "target_p95_ttft_seconds": {
+            "title": "Target P95 Ttft Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "peak_shift_overlap_ratio",
+          "avg_queries_per_tech_shift",
+          "target_p95_ttft_seconds"
+        ],
+        "title": "Concurrency",
+        "type": "object"
+      },
+      "Documents": {
+        "properties": {
+          "average_tokens_per_page": {
+            "title": "Average Tokens Per Page",
+            "type": "number"
+          },
+          "equipment_manuals_pdf_gb": {
+            "title": "Equipment Manuals Pdf Gb",
+            "type": "number"
+          },
+          "historical_work_orders_count": {
+            "title": "Historical Work Orders Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "equipment_manuals_pdf_gb",
+          "historical_work_orders_count",
+          "average_tokens_per_page"
+        ],
+        "title": "Documents",
+        "type": "object"
+      },
+      "Financials": {
+        "properties": {
+          "electricity_rate_kwh_usd": {
+            "title": "Electricity Rate Kwh Usd",
+            "type": "number"
+          }
+        },
+        "required": [
+          "electricity_rate_kwh_usd"
+        ],
+        "title": "Financials",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "SizeRequest": {
+        "properties": {
+          "audit_id": {
+            "title": "Audit Id",
+            "type": "string"
+          },
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "concurrency": {
+            "$ref": "#/components/schemas/Concurrency"
+          },
+          "deployment_constraint": {
+            "title": "Deployment Constraint",
+            "type": "string"
+          },
+          "documents": {
+            "$ref": "#/components/schemas/Documents"
+          },
+          "financials": {
+            "$ref": "#/components/schemas/Financials"
+          },
+          "safety_critical": {
+            "title": "Safety Critical",
+            "type": "boolean"
+          },
+          "technicians_per_shift": {
+            "title": "Technicians Per Shift",
+            "type": "integer"
+          },
+          "total_shifts": {
+            "title": "Total Shifts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "audit_id",
+          "client_name",
+          "deployment_constraint",
+          "technicians_per_shift",
+          "total_shifts",
+          "documents",
+          "concurrency",
+          "financials",
+          "safety_critical"
+        ],
+        "title": "SizeRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "RAG-Architect Sizing Engine",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/size-architecture": {
+      "post": {
+        "operationId": "size_architecture_api_v1_size_architecture_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Size Architecture Api V1 Size Architecture Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Size Architecture"
+      }
+    }
+  }
+}

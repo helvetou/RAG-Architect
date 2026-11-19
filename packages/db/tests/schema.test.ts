@@ -48,10 +48,19 @@ describe('TEST-DB-001 — Schema columns (REQ-DB-001)', () => {
     );
   });
 
-  it('auditSubmissions exposes document & concurrency parameters', () => {
+  it('auditSubmissions exposes document, concurrency & 21 CFR audit-trail parameters', () => {
     const columns = dbColumnNames(auditSubmissions);
     expect(columns).toEqual(
-      expect.arrayContaining(['avgTokensPerPage', 'avgQueriesPerTechShift', 'electricityRateKwhUsd']),
+      expect.arrayContaining([
+        'avgTokensPerPage',
+        'avgQueriesPerTechShift',
+        'electricityRateKwhUsd',
+        'actorId',
+        'inputPayloadSha256',
+        'outputPayloadSha256',
+        'specVersion',
+        'modelVersion',
+      ]),
     );
   });
 });
@@ -114,5 +123,34 @@ describe('TEST-DB-002 — Seed integrity & foreign keys (REQ-DB-001)', () => {
         })
         .run(),
     ).not.toThrow();
+  });
+
+  it('enforces append-only on auditSubmissions (21 CFR Part 11)', () => {
+    const { db } = setupDb();
+    db.insert(auditSubmissions)
+      .values({
+        id: 'audit-21cfr-1',
+        clientName: 'Helvetic Precision Manufacturing',
+        techniciansPerShift: 35,
+        totalShifts: 3,
+        manualsVolumeGb: 85,
+        historicalWorkOrdersCount: 450000,
+        avgTokensPerPage: 420,
+        deploymentConstraint: 'AIR_GAPPED_EDGE',
+        peakQueryRatio: 0.4,
+        avgQueriesPerTechShift: 15,
+        electricityRateKwhUsd: 0.18,
+        targetP95TtftSeconds: 1.5,
+        createdAt: new Date(),
+        actorId: 'engineer-1',
+        inputPayloadSha256: 'abc123',
+        outputPayloadSha256: 'def456',
+        specVersion: 'SPEC-GMAO-RAG-ARCH-003',
+        modelVersion: 'llama-3.2-3b-instruct-q4',
+      })
+      .run();
+
+    expect(() => db.update(auditSubmissions).set({ clientName: 'Tampered' }).run()).toThrow();
+    expect(() => db.delete(auditSubmissions).run()).toThrow();
   });
 });

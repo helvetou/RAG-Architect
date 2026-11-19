@@ -46,6 +46,12 @@ export const auditSubmissions = sqliteTable('audit_submissions', {
   electricityRateKwhUsd: real('electricity_rate_kwh_usd').default(0.18).notNull(),
   targetP95TtftSeconds: real('target_p95_ttft_seconds').default(1.5).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  // 21 CFR Part 11 immutable audit-trail fields (append-only; see migration trigger)
+  actorId: text('actor_id').notNull().default('system'),
+  inputPayloadSha256: text('input_payload_sha256').notNull().default(''),
+  outputPayloadSha256: text('output_payload_sha256').notNull().default(''),
+  specVersion: text('spec_version').notNull().default('SPEC-GMAO-RAG-ARCH-003'),
+  modelVersion: text('model_version').notNull().default('llama-3.2-3b-instruct-q4'),
 });
 
 // Multi-Tier Telemetry Calibration State (Traceability: REQ-CAL-001)
