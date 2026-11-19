@@ -8,6 +8,13 @@
       "when": 1794434183231,
       "tag": "0000_calm_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1795076123575,
+      "tag": "0001_powerful_spectrum",
+      "breakpoints": true
     }
   ]
 }
