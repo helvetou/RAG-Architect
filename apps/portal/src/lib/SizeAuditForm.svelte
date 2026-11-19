@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sizeRequestSchema } from '$lib/schemas';
+  import { sizeRequestSchema } from '#lib/schemas';
 
   const MODES = ['AIR_GAPPED_EDGE', 'HYBRID_CONNECTED', 'FULL_CLOUD'] as const;
 

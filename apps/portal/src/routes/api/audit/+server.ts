@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { sizeRequestSchema } from '$lib/schemas';
+import { sizeRequestSchema } from '#lib/schemas';
 
 // Local-dev default; override in production via platform/env (Cloudflare binding).
 const ENGINE_URL = 'http://127.0.0.1:8000';
