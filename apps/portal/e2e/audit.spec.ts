@@ -7,6 +7,7 @@ const MODES = ['AIR_GAPPED_EDGE', 'HYBRID_CONNECTED', 'FULL_CLOUD'] as const;
 for (const mode of MODES) {
   test(`TEST-INT-001: ${mode} end-to-end sizing journey renders TCO/VRAM`, async ({ page }) => {
     await page.goto('/');
+    await page.waitForTimeout(1500); // allow SvelteKit client hydration before interacting
     await page.getByLabel('Deployment mode').selectOption(mode);
     await page.getByLabel('Technicians per shift').fill('35');
     await page.getByLabel('Total shifts').fill('3');
@@ -14,8 +15,8 @@ for (const mode of MODES) {
     await page.getByLabel('Historical work orders').fill('450000');
     await page.getByRole('button', { name: /size architecture/i }).click();
 
-    await expect(page.getByText(/CAPEX/i)).toBeVisible();
-    await expect(page.getByText(/OPEX/i)).toBeVisible();
+    await expect(page.getByText(/CAPEX \$/i)).toBeVisible();
+    await expect(page.getByText(/OPEX \$/i)).toBeVisible();
     await expect(page.getByText(/recommended decision/i)).toBeVisible();
   });
 }

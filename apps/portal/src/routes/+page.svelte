@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SizeAuditForm from '#lib/SizeAuditForm.svelte';
+  import SizeAuditForm from '$lib/SizeAuditForm.svelte';
 </script>
 
 <main>

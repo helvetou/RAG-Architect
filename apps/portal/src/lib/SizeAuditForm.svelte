@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sizeRequestSchema } from '#lib/schemas';
+  import { sizeRequestSchema } from '$lib/schemas';
 
   const MODES = ['AIR_GAPPED_EDGE', 'HYBRID_CONNECTED', 'FULL_CLOUD'] as const;
 
@@ -132,5 +132,18 @@
   label {
     display: block;
     margin: 0.5rem 0;
+  }
+  input,
+  select,
+  button {
+    min-height: 44px; /* WCAG 2.5.8 target size (>=44x44px) for factory-floor touch */
+    font-size: 1rem;
+  }
+  button {
+    padding: 0.5rem 1rem;
+  }
+  .tco,
+  .vram {
+    font-variant-numeric: tabular-nums;
   }
 </style>
