@@ -52,7 +52,7 @@ Full history (oldest → newest): `f91dc09` → `97b661e` → `ac21693` → `6ec
 | `REQ-API-001` | P0 | `TEST-API-001` | `services/sizing-engine/tests/test_api.py` | ✅ |
 | `REQ-SAFE-001` | P0 | `TEST-SAFE-001` | `services/sizing-engine/tests/test_gate.py` | ✅ |
 | `REQ-CAL-001` | P1 | `TEST-CAL-001` | `services/sizing-engine/tests/test_calibration.py` | ✅ |
-| `REQ-CAL-002` | P1 | `TEST-CAL-002` | `services/sizing-engine/tests/test_calibration.py` | ✅ |
+| `REQ-CAL-002` | P1 | `TEST-CAL-002` | `services/sizing-engine/tests/test_calibration.py` | 🟡 Partiel (Core + Worker ✅; proxy Portal M5 pending) |
 
 Traceability completeness: **9 / 9 (100%)**. No `REQ-*` exists without a mapped `TEST-*`.
 

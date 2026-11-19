@@ -21,8 +21,8 @@ This matrix locks the bidirectional traceability between formal requirements (`R
 | `REQ-MATH-003` | Sizing Math | P0 | Section 5.2 | `services/sizing-engine/core/calculator.py` | `TEST-MATH-003` | `services/sizing-engine/tests/test_calculator.py` |
 | `REQ-FIN-001` | Financial TCO | P0 | Section 5.3 | `services/sizing-engine/core/calculator.py` | `TEST-FIN-001` | `services/sizing-engine/tests/test_calculator.py` |
 | `REQ-API-001` | Interface | P0 | Section 6.1 | `services/sizing-engine/api/routes.py` | `TEST-API-001` | `services/sizing-engine/tests/test_api.py` |
-| `REQ-SAFE-001` | Safety Gate | P0 | Section 7.4 | `services/sizing-engine/core/gate.py` | `TEST-SAFE-001` | `services/sizing-engine/tests/test_gate.py` |
-| `REQ-CAL-001` | Calibration | P1 | Section 7.5 | `services/sizing-engine/core/calibration.py` | `TEST-CAL-001` | `services/sizing-engine/tests/test_calibration.py` |
+| `REQ-SAFE-001` | Safety Gate | P0 | Section 7.3 | `services/sizing-engine/core/gate.py` | `TEST-SAFE-001` | `services/sizing-engine/tests/test_gate.py` |
+| `REQ-CAL-001` | Calibration | P1 | Section 7.4 | `services/sizing-engine/core/calibration.py` | `TEST-CAL-001` | `services/sizing-engine/tests/test_calibration.py` |
 | `REQ-CAL-002` | Calibration | P1 | Section 6.2 | `apps/portal/src/routes/api/batch-upload/+server.ts` | `TEST-CAL-002` | `services/sizing-engine/tests/test_calibration.py` |
 
 ## Requirements Catalog (frozen in M1)
@@ -35,7 +35,7 @@ This matrix locks the bidirectional traceability between formal requirements (`R
 | `REQ-MATH-003` | The sizing engine SHALL calculate total required GPU VRAM as the sum of Model Weights, KV Cache, VectorDB Index, Resident Reranker (2.0 GB), and a 20 % Safety Headroom on Weights + KV Cache, scaled by `M_calib`. |
 | `REQ-FIN-001` | The sizing engine SHALL compute a 36-month CAPEX TCO (hardware acquisition + TDP electricity + monthly maintenance) versus 36-month Cloud OPEX TCO (token volume pricing + managed vector hosting). |
 | `REQ-API-001` | The `POST /api/v1/size-architecture` endpoint SHALL validate inputs via Pydantic v2 and return deterministic sizing, RAG configuration, and TCO projections matching the baseline verification vector within ±0.01 precision. |
-| `REQ-SAFE-001` | The Zero-Hallucination Gate (`gate.py`) SHALL synchronously inspect generated responses and block any response missing an explicit `[Manual ID, Section, Page]` citation or containing physical quantities (`Nm, bar, psi, V, A, °C`) absent from the retrieved parent chunks. |
+| `REQ-SAFE-001` | The Zero-Hallucination Gate (`gate.py`) SHALL synchronously inspect generated responses and block any response missing an explicit `[Manual ID, Section, Page]` citation or containing physical quantities (`Nm, N·m, N.m, daNm, bar, psi, Pa, kPa, MPa, V, kV, A, mA, Hz, °C, mm, µm, rpm, min, L/min, ppm, %`) absent from the retrieved parent chunks. |
 | `REQ-CAL-001` | The calibration processor (`calibration.py`) SHALL increment `computeScalingMultiplier` (`M_calib`) by +0.20 when 7-day rolling P95 TTFT exceeds 1500 ms or peak VRAM exceeds 90 % of hardware capacity. |
 | `REQ-CAL-002` | The calibration processor SHALL support dual-mode ingestion: real-time Cloudflare Worker events (`HYBRID_CONNECTED`/`FULL_CLOUD`) and `.jsonl.gz` batch uploads (`AIR_GAPPED_EDGE`), evaluating async RAGAS recall on a 5 % sample. |
 

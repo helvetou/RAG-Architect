@@ -2,7 +2,7 @@
 
 - **Repository:** `/media/malek/DONNEES/pydev/RAG-Architect`
 - **Branch:** `main` @ `104dd83` (5 commits)
-- **Status date:** 2026-11-18
+- **Status date:** 2026-11-19
 
 ## 1. Goal (restated)
 
@@ -68,6 +68,10 @@ Critical path: M1 → M2 → {M3 ∥ M4 ingestion} → M5 → M6.
 - `tests/test_calibration.py` — `TEST-CAL-001`, `TEST-CAL-002`.
 - `apps/telemetry-worker/src/index.test.ts` — `TEST-TEL-001`, `TEST-TEL-002`.
 - pytest 13 passed @ 99.50% branch coverage; vitest 2 passed; tsc + ruff + mypy clean.
+- **Phase A remediation (AUD-01/03/07):** worker SHA-256 batch signature +
+  `scheduled()` D1 persist (TEST-TEL-003/004), p99<15ms benchmark, safety gate
+  anti-spoofing + GMP units (TEST-SAFE-001d/e/f), calibration 5% RAGAS sampling
+  + `.jsonl.gz` parsing, FP16 KV test, Dockerfile + CI artifact/gates.
 
 ## 4. Next up — M5 (BL-05-INTEG)
 
@@ -103,7 +107,7 @@ HYBRID_CONNECTED / FULL_CLOUD.
   `TEST-SAFE-001`, `TEST-API-001`, `TEST-CAL-001/002`). Remaining `TEST-TEL-*`,
   `TEST-UI-*`, `TEST-INT-*`, `TEST-GMP-*` are milestone-level tests beyond the
   frozen 9 requirements (no `REQ-*` conflict) and are retained.
-- **5 untracked files** in the working tree — inspect and decide commit vs ignore.
+- **`.codewhale/verify-*.sh` scripts — RESOLVED (2026-11-19):** tracked in commit `80ca7d7`.
 - **M4 note — RESOLVED (2026-11-18):** `REQ-CAL-002` dual-mode ingestion is
   implemented and verified in `core/calibration.py` (TEST-CAL-001/002) and the
   telemetry worker (TEST-TEL-001/002). The RTM's portal-route mapping for the
@@ -113,8 +117,8 @@ HYBRID_CONNECTED / FULL_CLOUD.
 ## 6. Immediate next actions (checklist)
 
 - [x] M3 (BL-03-CORE): RED → GREEN → REFACTOR — pytest 8/8, ruff, mypy clean.
-- [x] M4 (BL-04-TELEM): RED → GREEN — calibration.py + telemetry worker,
-      pytest 13/13 @ 99.50%, vitest 2/2, tsc/ruff/mypy clean.
-- [ ] Commit M4 work.
-- [ ] Review the 5 untracked `.codewhale/verify-*.sh` files.
-- [ ] Start M5 (BL-05-INTEG): portal UI + 4-tier integration (`TEST-UI-001`, `TEST-INT-001`).
+- [x] M4 (BL-04-TELEM): RED → GREEN — calibration.py + telemetry worker.
+- [x] Commit M4 work (`489e52e`) + track verify scripts (`80ca7d7`).
+- [x] Phase A audit remediation (AUD-01/03/07): worker signature+scheduled,
+      gate hardening, calibration sampling/parsing, FP16 test, Dockerfile+CI.
+- [ ] Start M5 (BL-05-INTEG) — only after Phase A exit gate + explicit approval.

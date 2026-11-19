@@ -32,3 +32,11 @@ VRAM total 10.38 GB, CAPEX 26 460.83 vs OPEX 54 120.00). The v3.0 spec §5.2
 chunk formula as written yields 901 313 chunks with the §6.1 inputs — the
 chunk-count derivation must be reconciled in GREEN so `compute_total_child_chunks`
 returns 550 563.
+
+## Resolution Addendum (CR-001)
+
+Resolution recorded in `cr-001-reference-vector.md`: the `aud-gmao-2026-001`
+vector was migrated to the full formula-exact values (Option B) — chunks
+`901 313`, KV `4.66 GB`, vectorDB `1.15 GB`, VRAM total `10.96 GB`, TCO CAPEX
+`26 458.24` vs OPEX `54 531.94`. This log is preserved as the historical RED
+record; the final vector is defined in the governing spec §6.1 and CR-001.

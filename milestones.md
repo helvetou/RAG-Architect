@@ -58,12 +58,12 @@ Develops the Python 3.12 mathematical microservice (services/sizing-engine) hand
 
 * **Entry Criteria:** BL-02-DATA signed off.  
 * **CMMI Process Areas:**  
-  * **TS & DAR (Decision Analysis and Resolution):** Implement deterministic mathematical models for VRAM headroom (\$20\\%\$), HNSW index overhead (${F}_{index}=1.25$), and RRF hybrid parameters ($k=60$).  
-  * **RSKM & VER:** Mitigate RSK-001 (OOM on factory edge) and RSK-002 (numeric hallucination on torque/pressure values) via strict unit verification.  
+  * **TS & DAR (Decision Analysis and Resolution):** Implement deterministic mathematical models for VRAM headroom (20%), HNSW index overhead (${F}_{index}=1.25$), and RRF hybrid parameters ($k=60$).  
+  * **RSKM & VER:** Mitigate RSK-001 (numeric hallucination on torque/pressure values) and RSK-002 (OOM on factory edge) via strict unit verification.  
 * **TDD Execution Scope:**  
   * **Phase RED:** Commit the complete test suite (tests/test\_calculator.py covering TEST-MATH-001 to TEST-MATH-003 and TEST-FIN-001, tests/test\_gate.py covering TEST-SAFE-001, and tests/test\_api.py covering TEST-API-001) and record the initial failure log (ImportError / AssertionError).  
   * **Phase GREEN:**  
-    1. Implement core/calculator.py: concurrency (\$\\lceil 35 \\times 0.40 \\rceil \= 14\$), KV Cache ($4.66GB$), chunk estimation ($901,313chunks$), total VRAM ($10.96GB$), and 3-year TCO ($26,458.24USDCAPEX$ vs $54,531.94USDOPEX$).  
+    1. Implement core/calculator.py: concurrency (ceil(35 × 0.40) = 14), KV Cache (4.66 GB), chunk estimation (901,313 chunks), total VRAM (10.96 GB), and 3-year TCO (26,458.24 USD CAPEX vs 54,531.94 USD OPEX).  
     2. Implement core/gate.py: regex and AST numeric extractor verifying that every numeric quantity (Nm, bar, V, °C) and SOP citation in generated answers exists verbatim in retrieved parent chunks.  
     3. Implement api/routes.py: FastAPI endpoint POST /api/v1/size-architecture with strict Pydantic v2 models.  
   * **Phase REFACTOR:** Vectorize calculations with NumPy and enforce zero-warning mypy \--strict typing.  
@@ -71,7 +71,7 @@ Develops the Python 3.12 mathematical microservice (services/sizing-engine) hand
   * Containerized Python 3.12 sizing microservice (Dockerfile \+ pyproject.toml managed by uv).  
   * JUnit XML test report and coverage artifact.  
 * **Exit Criteria & PPQA Gate (BL-03-CORE):**  
-  * 100% pass rate on TEST-MATH-\*, TEST-FIN-\*, TEST-SAFE-\*, and TEST-API-\* with \$\\ge 95\\%\$ branch coverage.  
+  * 100% pass rate on TEST-MATH-\*, TEST-FIN-\*, TEST-SAFE-\*, and TEST-API-\* with $\ge 95\%$ branch coverage.  
   * Exact numerical match with the reference JSON specification (aud-gmao-2026-001).
 
 ### **Milestone 4 (M4): Telemetry Ingestion Pipeline & Closed-Loop Auto-Calibration (Days 16–21)**
@@ -86,7 +86,7 @@ Builds the Cloudflare Worker ingestion service (apps/telemetry-worker), the offl
   * **Phase RED:** Commit tests/test\_calibration.py (TEST-CAL-001 and TEST-CAL-002) and Worker unit tests (TEST-TEL-001, TEST-TEL-002).  
   * **Phase GREEN:**  
     1. Implement apps/telemetry-worker/src/index.ts for POST /api/v1/telemetry/event and POST /api/v1/telemetry/batch-upload with Bearer token validation and non-blocking ctx.waitUntil() R2 writes.  
-    2. Implement services/sizing-engine/core/calibration.py executing Loop 1 (\$+20\\%\$ compute scaling if P95 TTFT $>1500ms$ or VRAM \$\> 90\\%\$), Loop 2 (\$-20\\%\$ child chunk size if Context Recall $<0.75$), and Loop 3 (Semantic Router provisioning if cloud token spend exceeds baseline by \$\> 15\\%\$).  
+    2. Implement services/sizing-engine/core/calibration.py executing Loop 1 (+20% compute scaling if P95 TTFT > 1500 ms or VRAM > 90%), Loop 2 (-20% child chunk size if Context Recall < 0.75), and Loop 3 (Semantic Router provisioning if cloud token spend exceeds baseline by > 15%).  
   * **Phase REFACTOR:** Harden SHA-256 signature verification on air-gapped batch uploads.  
 * **Deliverables (Work Products):**  
   * Cloudflare Worker deployment package (wrangler.toml, src/index.ts).  
@@ -128,7 +128,7 @@ Executes formal validation against the regulated pharmaceutical/GMP reference ca
   * Signed Software Validation Report (PV de Qualification) & Immutable Audit Trail verification.  
   * FCA/PCA Compliance Certificate & Production Release BL-06-REL-1.0.  
 * **Exit Criteria & PPQA Gate (BL-06-REL-1.0):**  
-  * 100% pass rate on the full RTM test matrix (\$\\ge 95\\%\$ code coverage overall).  
+  * 100% pass rate on the full RTM test matrix ($\ge 95\%$ code coverage overall).  
   * Zero open Critical or High severity defects; formal sign-off for production deployment on smartmaintenance.helveticore.com.
 
 ## **3\. Critical Path & Dependency Sequence**
@@ -150,5 +150,3 @@ Executes formal validation against the regulated pharmaceutical/GMP reference ca
 \[M6: GMP Projet 04 Qualification & FCA/PCA Release (BL-06)\]
 
 * **Parallelization Opportunity:** Once **M2 (BL-02-DATA)** locks the Drizzle D1 schemas and seed data on Day 8, **M3 (Python Sizing Engine)** and the ingestion portion of **M4 (Cloudflare Telemetry Worker)** can run in parallel before converging on Day 18 for the closed-loop calibration integration.
-
-Would you like me to generate the **Milestone 1 & Milestone 2 execution files** (the packages/db/src/schema.ts, seed.ts, and the Phase RED pytest test files) so you can initialize BL-01-INIT and BL-02-DATA immediately?
