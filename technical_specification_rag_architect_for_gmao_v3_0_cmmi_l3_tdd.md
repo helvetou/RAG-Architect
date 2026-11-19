@@ -13,6 +13,21 @@
 | **Applicable CMMI Process Areas** | RD (Requirements Development), REQM (Requirements Management), TS (Technical Solution), PI (Product Integration), VER (Verification), VAL (Validation), CM (Configuration Management), PPQA (Process & Product Quality Assurance), RSKM (Risk Management) |
 | **Quality Gate Criteria** | $100\%$ Requirement Traceability, $\ge 95\%$ Line/Branch Coverage on Core Math & Safety Gate, $0$ Unverified Numerical Outputs |
 
+### Baseline & Implementation Status (through 2026-11-19)
+
+| Baseline | Milestone | Commit | State |
+| :--- | :--- | :--- | :--- |
+| `BL-01-INIT` | M1 — Tailoring, RTM, FMEA, monorepo, CI | `f91dc09` | ✅ Complete |
+| `BL-02-DATA` | M2 — D1 schema + catalog seed | `104dd83` | ✅ Complete |
+| `BL-03-CORE` | M3 — Sizing engine + zero-hallucination gate | `6fc95b6` | ✅ Complete |
+| `BL-04-TELEM` | M4 — Telemetry worker + auto-calibration | `489e52e` | ✅ Complete |
+
+**Reference-vector correction (2026-11-18, REQM/CM):** the `aud-gmao-2026-001`
+vector in §6.1 was reconciled to the exact §5.1/§5.2/§5.3 formulas — chunks
+`901 313`, KV `4.66 GB`, vectorDB `1.15 GB`, VRAM total `10.96 GB`, TCO CAPEX
+`26 458.24` vs OPEX `54 531.94`. M5 (`BL-05-INTEG`) and M6 (`BL-06-REL-1.0`)
+remain pending.
+
 > **Scope Clarification for Coding Agents & Engineering Teams:** Sections 1 through 9 specify the **RAG-Architect Sizing & Calibration Platform** under CMMI Level 3 governance and strict TDD rules. Section 10 is a **Reference Case Study Appendix** (in French) illustrating a qualified industrial RAG deployment in a regulated GMP environment.
 
 ---
