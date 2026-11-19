@@ -8,7 +8,7 @@ on:
 
 jobs:
   cmmi-gate:
-    name: BL-01..BL-04 quality gates (lint, type-check, TDD coverage)
+    name: BL-01..BL-06 quality gates (4-tier lint, type-check, TDD coverage)
     runs-on: ubuntu-latest
 
     steps:
@@ -92,3 +92,9 @@ jobs:
 
       - name: Gate 8 — Telemetry worker tests (vitest + benchmark)
         run: pnpm --filter @rag-architect/telemetry-worker test
+
+      - name: Gate 9 — Portal unit/contract tests (vitest)
+        run: pnpm --filter @rag-architect/portal test
+
+      - name: Gate 10 — Portal production build (vite build)
+        run: pnpm --filter @rag-architect/portal build

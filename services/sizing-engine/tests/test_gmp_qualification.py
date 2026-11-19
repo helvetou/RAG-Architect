@@ -7,6 +7,7 @@ import gzip
 import hashlib
 import json
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,8 +27,8 @@ GOLDEN_SHA256 = "250e43a47dae2d614e0459a70e6d7775fcf4261c92e9a9c815a200d36d0a2e9
 client = TestClient(app)
 
 
-def _load_golden() -> dict:
-    return json.loads(GOLDEN_PATH.read_text())
+def _load_golden() -> dict[str, Any]:
+    return cast(dict[str, Any], json.loads(GOLDEN_PATH.read_text()))
 
 
 def _canonical(obj: object) -> str:
@@ -113,7 +114,9 @@ def test_gmp_003_pq_math_jsonl_and_calibration() -> None:
     )
     assert response.status_code == 200
     body = response.json()
-    assert body["verdict"]["model_stack"]["total_vram_required_gb"] == pytest.approx(10.96, abs=0.01)
+    assert body["verdict"]["model_stack"]["total_vram_required_gb"] == pytest.approx(
+        10.96, abs=0.01
+    )
     tco = body["verdict"]["tco_3year_comparison"]
     assert tco["capex_edge_total_usd"] == pytest.approx(26458.24, abs=0.01)
     assert tco["opex_cloud_total_usd"] == pytest.approx(54531.94, abs=0.01)

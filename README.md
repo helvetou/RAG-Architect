@@ -23,7 +23,7 @@ strict **Test-Driven Development (Red-Green-Refactor)**.
 | M3 — Sizing engine + safety gate | `BL-03-CORE` | ✅ Complete |
 | M4 — Telemetry worker + calibration | `BL-04-TELEM` | ✅ Complete |
 | M5 — Portal + 4-tier integration | `BL-05-INTEG` | ✅ Complete |
-| M6 — GMP qualification, FCA/PCA | `BL-06-REL-1.0` | ⏳ Pending |
+| M6 — GMP qualification, FCA/PCA | `BL-06-REL-1.0` | ✅ Ready (host Docker build pending) |
 
 ## Repository layout
 
