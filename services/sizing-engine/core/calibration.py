@@ -5,7 +5,13 @@ Implements the three feedback loops from spec section 7.4:
 - Loop 2: -20% child chunk size when context recall < 0.75 or P50 reranker < 0.60.
 - Loop 3: enable the semantic router when cloud token spend exceeds baseline +15%.
 """
+import gzip
+import hashlib
+import json
 from dataclasses import dataclass
+from typing import Any
+
+SAMPLING_RATE = 0.05
 
 P95_TTFT_THRESHOLD_MS = 1500.0
 PEAK_VRAM_RATIO = 0.90
@@ -71,3 +77,20 @@ def evaluate_calibration_loops(metrics: RollingTelemetryMetrics) -> CalibrationD
         loop3_triggered=loop3_triggered,
         enable_semantic_router=loop3_triggered,
     )
+
+
+def should_sample_for_eval(query_hash: str, sample_rate: float = SAMPLING_RATE) -> bool:
+    """REQ-CAL-002: deterministic 5% async RAGAS sampling decision."""
+    digest = hashlib.sha256(query_hash.encode("utf-8")).hexdigest()
+    bucket = int(digest, 16) % 100
+    return bucket < int(sample_rate * 100)
+
+
+def parse_jsonl_gz(payload: bytes) -> list[dict[str, Any]]:
+    """REQ-CAL-002: decompress and parse an air-gapped .jsonl.gz telemetry batch."""
+    decompressed = gzip.decompress(payload)
+    records: list[dict[str, Any]] = []
+    for line in decompressed.decode("utf-8").splitlines():
+        if line.strip():
+            records.append(json.loads(line))
+    return records

@@ -10,6 +10,8 @@ Traceability:
 Methodology: Strict TDD (write and fail before implementing core/calculator.py).
 Reference vector: `aud-gmao-2026-001`.
 """
+from dataclasses import replace
+
 import pytest
 
 from core.calculator import (
@@ -64,6 +66,15 @@ def test_req_math_001_active_streams_and_kv_cache(llama_3_2_3b_q4: ModelSpec) ->
         model=llama_3_2_3b_q4,
     )
     assert round(kv_cache_gb, 2) == 4.66
+
+
+def test_req_math_001_fp16_kv_cache(llama_3_2_3b_q4: ModelSpec) -> None:
+    """TEST-MATH-001 (REQ-MATH-001): kv_cache_bits parameterizes KV cache (FP16 = 2x FP8)."""
+    fp16 = replace(llama_3_2_3b_q4, kv_cache_bits=16)
+    kv_fp16 = compute_kv_cache_gb(active_streams=14, sequence_length=5800, model=fp16)
+    kv_fp8 = compute_kv_cache_gb(active_streams=14, sequence_length=5800, model=llama_3_2_3b_q4)
+    assert round(kv_fp16, 2) == 9.31
+    assert kv_fp16 == pytest.approx(kv_fp8 * 2)
 
 
 def test_req_math_002_document_to_chunk_conversion() -> None:

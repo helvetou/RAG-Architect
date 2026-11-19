@@ -7,9 +7,17 @@ Traceability:
 
 Methodology: Strict TDD (write and fail before implementing core/calibration.py).
 """
+import gzip
+import json
+
 import pytest
 
-from core.calibration import RollingTelemetryMetrics, evaluate_calibration_loops
+from core.calibration import (
+    RollingTelemetryMetrics,
+    evaluate_calibration_loops,
+    parse_jsonl_gz,
+    should_sample_for_eval,
+)
 
 
 def test_req_cal_001_loop1_hardware_scaling_trigger() -> None:
@@ -110,3 +118,22 @@ def test_cal_no_loops_triggered() -> None:
     assert decision.updated_scaling_multiplier == pytest.approx(1.0)
     assert decision.recommended_child_chunk_tokens == 200
     assert decision.enable_semantic_router is False
+
+
+def test_cal_sample_rate_boundaries_and_determinism() -> None:
+    """REQ-CAL-002: async RAGAS sampling is deterministic and rate-controlled."""
+    assert should_sample_for_eval("key", sample_rate=1.0) is True
+    assert should_sample_for_eval("key", sample_rate=0.0) is False
+    assert should_sample_for_eval("key", sample_rate=0.05) == should_sample_for_eval(
+        "key", sample_rate=0.05
+    )
+
+
+def test_cal_parse_jsonl_gz_batch() -> None:
+    """REQ-CAL-002: air-gapped .jsonl.gz batch parses into telemetry records."""
+    records = [
+        {"client_id": "a", "timestamp": "t1"},
+        {"client_id": "b", "timestamp": "t2"},
+    ]
+    payload = gzip.compress(("\n".join(json.dumps(r) for r in records) + "\n").encode())
+    assert parse_jsonl_gz(payload) == records
