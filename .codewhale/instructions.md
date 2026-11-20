@@ -4,7 +4,7 @@ Lois strictes du projet. Toute implémentation doit les respecter sans exception
 
 ## 1. Architecture 4-tiers découplée
 
-- **Tier 1 — Audit Portal & Edge BFF (Front-End)** : SvelteKit + Tailwind CSS sur Cloudflare Pages (`smartmaintenance.helveticore.com`). Les routes serveur interrogent D1 via Drizzle ORM et passent le snapshot catalogue dans le payload REST.
+- **Tier 1 — Audit Portal & Edge BFF (Front-End)** : SvelteKit + Tailwind CSS sur Cloudflare Pages (`rag-architect.helveticore.com`). Les routes serveur interrogent D1 via Drizzle ORM et passent le snapshot catalogue dans le payload REST.
 - **Tier 2 — Sizing Engine (Backend)** : microservice **Python 3.12** sans état, géré par **`uv`**, packagé en Docker (Fly). Calculs déterministes : VRAM, KV Cache, VectorDB, gate zéro-hallucination, TCO 3 ans.
 - **Tier 3 — Knowledge Base** : base relationnelle **Cloudflare D1 (SQLite)** gérée par **Drizzle ORM** (`packages/db/src/schema.ts`). Catalogues matériels, modèles LLM, soumissions d'audit, coefficients de calibration.
 - **Tier 4 — Telemetry Ingestion Pipeline (double mode)** :

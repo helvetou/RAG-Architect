@@ -4,7 +4,7 @@
 - **Date:** 2026-11-19
 - **Governing spec:** `SPEC-GMAO-RAG-ARCH-003` (v3.0.0)
 - **Methodology:** CMMI-DEV Level 3 ("Defined") + strict TDD (Red-Green-Refactor)
-- **Target deployment:** `smartmaintenance.helveticore.com`
+- **Target deployment:** `rag-architect.helveticore.com`
 
 ---
 

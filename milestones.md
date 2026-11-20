@@ -108,7 +108,7 @@ Develops the SvelteKit \+ Tailwind CSS qualification workbench (apps/portal) and
   * **Phase GREEN:** Build the multi-step qualification interface in \+page.svelte, server-side proxy actions, and interactive TCO/VRAM breakdown visualizations.  
   * **Phase REFACTOR:** Enforce accessibility (WCAG AA contrast for factory floor tablets) and responsive layout for Panasonic Toughbook G2 viewports.  
 * **Deliverables (Work Products):**  
-  * Full SvelteKit portal ready for deployment at smartmaintenance.helveticore.com.  
+  * Full SvelteKit portal ready for deployment at rag-architect.helveticore.com.  
   * End-to-End integration test report across Pages, D1, R2, and Python Docker container.  
 * **Exit Criteria & PPQA Gate (BL-05-INTEG):**  
   * Zero contract mismatches between TypeScript Zod/Drizzle schemas and Python Pydantic schemas.  
@@ -129,7 +129,7 @@ Executes formal validation against the regulated pharmaceutical/GMP reference ca
   * FCA/PCA Compliance Certificate & Production Release BL-06-REL-1.0.  
 * **Exit Criteria & PPQA Gate (BL-06-REL-1.0):**  
   * 100% pass rate on the full RTM test matrix ($\ge 95\%$ code coverage overall).  
-  * Zero open Critical or High severity defects; formal sign-off for production deployment on smartmaintenance.helveticore.com.
+  * Zero open Critical or High severity defects; formal sign-off for production deployment on rag-architect.helveticore.com.
 
 ## **3\. Critical Path & Dependency Sequence**
 

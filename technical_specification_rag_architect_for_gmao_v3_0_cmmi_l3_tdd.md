@@ -8,7 +8,7 @@
 | :--- | :--- |
 | **Document ID** | `SPEC-GMAO-RAG-ARCH-003` |
 | **Version** | `v3.0.0` (Baseline — CMMI-DEV Level 3 Defined Process) |
-| **Target Deployment** | `smartmaintenance.helveticore.com` |
+| **Target Deployment** | `rag-architect.helveticore.com` |
 | **Development Methodology** | **Strict Test-Driven Development (TDD: Red-Green-Refactor)** |
 | **Applicable CMMI Process Areas** | RD (Requirements Development), REQM (Requirements Management), TS (Technical Solution), PI (Product Integration), VER (Verification), VAL (Validation), CM (Configuration Management), PPQA (Process & Product Quality Assurance), RSKM (Risk Management) |
 | **Quality Gate Criteria** | $100\%$ Requirement Traceability, $\ge 95\%$ Line/Branch Coverage on Core Math & Safety Gate, $0$ Unverified Numerical Outputs |
@@ -111,7 +111,7 @@ The platform separates client-facing interactions, specification metadata, compu
 +-------------------------------------------------------------------------+
 |                 1. Audit Portal & Edge BFF (Front-End)                  |
 |              SvelteKit + Tailwind CSS on Cloudflare Pages               |
-|                   smartmaintenance.helveticore.com                      |
+|                   rag-architect.helveticore.com                         |
 +-----------------+-----------------------------------+-------------------+
                   |                                   |
                   | 1a. Fetch Catalog & Rules         | 1b. POST /api/v1/size-architecture

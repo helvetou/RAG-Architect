@@ -1,6 +1,6 @@
 # Technical Specification: RAG-Architect for GMAO (Smart Maintenance) — v2.1
 
-This document establishes the end-to-end technical, architectural, and data engineering requirements for **RAG-Architect for GMAO**, targeted for deployment at `smartmaintenance.helveticore.com`. It provides a deterministic, implementation-ready specification for engineering teams and coding agents building the automated audit, sizing, and telemetry calibration platform.
+This document establishes the end-to-end technical, architectural, and data engineering requirements for **RAG-Architect for GMAO**, targeted for deployment at `rag-architect.helveticore.com`. It provides a deterministic, implementation-ready specification for engineering teams and coding agents building the automated audit, sizing, and telemetry calibration platform.
 
 > **Scope Clarification for Coding Agents:** Sections 1 through 7 specify the **RAG-Architect Sizing & Calibration Platform** (the software to be built in this repository). Section 8 is a **Reference Case Study Appendix** (in French) illustrating how a target industrial RAG deployment looks in production once sized by this platform.
 
@@ -20,7 +20,7 @@ The platform separates client-facing interactions, specification metadata, compu
 +-------------------------------------------------------------------------+
 |                 1. Audit Portal & Edge BFF (Front-End)                  |
 |              SvelteKit + Tailwind CSS on Cloudflare Pages               |
-|                   smartmaintenance.helveticore.com                      |
+|                   rag-architect.helveticore.com                         |
 +-----------------+-----------------------------------+-------------------+
                   |                                   |
                   | 1a. Fetch Catalog & Rules         | 1b. POST /api/v1/size-architecture
