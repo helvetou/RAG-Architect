@@ -90,6 +90,17 @@ Target domain: `rag-architect.helveticore.com` (independent, isolated deployment
   `audit_submissions is append-only`) — covered locally by `packages/db/tests/gmp.test.ts`
   and validated end-to-end against D1.
 
+### Post-deploy validation (2026-11-20)
+
+- `POST https://rag-architect-portal.pages.dev/api/audit` with payload
+  `aud-post-deploy-001` (incl. `safety_critical: true`) → **HTTP/2 200** with the
+  full Fly.io sizing verdict.
+- D1 `rag-architect-db` (`ba6b952e-1d76-4201-a650-aba9df3d0307`) now holds
+  `audit_submissions` rows `aud-cli-test-004` and `aud-post-deploy-001`
+  (`actor_id: portal-bff`, `deployment_constraint: AIR_GAPPED_EDGE`).
+- 21 CFR Part 11 append-only confirmed live: any `DELETE` is rejected with
+  `SQLITE_CONSTRAINT_TRIGGER` (`audit_submissions is append-only`).
+
 ## Governance documents
 
 - `technical_specification_rag_architect_for_gmao_v3_0_cmmi_l3_tdd.md` — governing spec (v3.0)
