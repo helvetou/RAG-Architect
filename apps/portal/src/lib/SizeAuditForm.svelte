@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { sizeRequestSchema } from '$lib/schemas';
+  import { sizeRequestSchema, type SizeRequest } from '$lib/schemas';
+  import { randomUuid } from '$lib/audit';
 
   const MODES = ['AIR_GAPPED_EDGE', 'HYBRID_CONNECTED', 'FULL_CLOUD'] as const;
 
@@ -27,6 +28,7 @@
   };
 
   let deploymentMode = $state('AIR_GAPPED_EDGE');
+  let clientName = $state('Helvetic Precision Manufacturing');
   let technicians = $state('');
   let totalShifts = $state('3');
   let manualsGb = $state('85');
@@ -43,31 +45,42 @@
   const currency = (value: number) =>
     '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const parseDecimal = (value: string | number): number => Number(String(value).replace(',', '.'));
+
   async function submit() {
     error = '';
+    result = null;
     if (!technicians) {
       error = 'Technicians per shift is required';
       return;
     }
-    const payload = sizeRequestSchema.parse({
-      audit_id: 'aud-gmao-2026-001',
-      client_name: 'Helvetic Precision Manufacturing',
-      deployment_constraint: deploymentMode,
-      technicians_per_shift: Number(technicians),
-      total_shifts: Number(totalShifts),
-      documents: {
-        equipment_manuals_pdf_gb: Number(manualsGb),
-        historical_work_orders_count: Number(workOrders),
-        average_tokens_per_page: Number(avgTokens),
-      },
-      concurrency: {
-        peak_shift_overlap_ratio: Number(peakRatio),
-        avg_queries_per_tech_shift: Number(avgQueries),
-        target_p95_ttft_seconds: 1.5,
-      },
-      financials: { electricity_rate_kwh_usd: Number(electricityRate) },
-      safety_critical: safetyCritical,
-    });
+
+    let payload: SizeRequest;
+    try {
+      payload = sizeRequestSchema.parse({
+        audit_id: randomUuid(),
+        client_name: clientName.trim() || 'Helvetic Precision Manufacturing',
+        deployment_constraint: deploymentMode,
+        technicians_per_shift: parseDecimal(technicians),
+        total_shifts: parseDecimal(totalShifts),
+        documents: {
+          equipment_manuals_pdf_gb: parseDecimal(manualsGb),
+          historical_work_orders_count: parseDecimal(workOrders),
+          average_tokens_per_page: parseDecimal(avgTokens),
+        },
+        concurrency: {
+          peak_shift_overlap_ratio: parseDecimal(peakRatio),
+          avg_queries_per_tech_shift: parseDecimal(avgQueries),
+          target_p95_ttft_seconds: 1.5,
+        },
+        financials: { electricity_rate_kwh_usd: parseDecimal(electricityRate) },
+        safety_critical: safetyCritical,
+      });
+    } catch {
+      error = 'Please check your inputs: all numeric fields must be valid numbers.';
+      return;
+    }
+
     loading = true;
     try {
       const response = await fetch('/api/audit', {
@@ -75,7 +88,14 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        error = body?.error ?? 'The sizing request failed. Please try again.';
+        return;
+      }
       result = (await response.json()) as SizingResult;
+    } catch {
+      error = 'Network error — could not reach the sizing engine.';
     } finally {
       loading = false;
     }
@@ -93,16 +113,19 @@
         {/each}
       </select>
     </label>
+    <label>Client name <input bind:value={clientName} type="text" /></label>
     <label>Technicians per shift <input bind:value={technicians} type="number" min="1" /></label>
     <label>Total shifts <input bind:value={totalShifts} type="number" min="1" /></label>
-    <label>Manuals volume (GB) <input bind:value={manualsGb} type="number" min="0" step="0.1" /></label>
+    <label>Manuals volume (GB) <input bind:value={manualsGb} type="text" inputmode="decimal" /></label>
     <label>Historical work orders <input bind:value={workOrders} type="number" min="0" /></label>
     <label>Avg tokens per page <input bind:value={avgTokens} type="number" min="1" /></label>
-    <label>Peak shift overlap ratio <input bind:value={peakRatio} type="number" min="0" max="1" step="0.01" /></label>
+    <label>Peak shift overlap ratio <input bind:value={peakRatio} type="text" inputmode="decimal" /></label>
     <label>Avg queries per tech shift <input bind:value={avgQueries} type="number" min="1" /></label>
-    <label>Electricity rate (USD/kWh) <input bind:value={electricityRate} type="number" min="0" step="0.01" /></label>
+    <label>Electricity rate (USD/kWh) <input bind:value={electricityRate} type="text" inputmode="decimal" /></label>
     <label><input type="checkbox" bind:checked={safetyCritical} /> Safety critical (HA)</label>
-    <button type="button" onclick={() => void submit()} disabled={loading}>Size architecture</button>
+    <button type="button" onclick={() => void submit()} disabled={loading} aria-busy={loading}>
+      {loading ? 'Sizing…' : 'Size architecture'}
+    </button>
   </form>
   {#if error}
     <p role="alert">{error}</p>

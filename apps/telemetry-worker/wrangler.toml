@@ -10,7 +10,7 @@ preview_bucket_name = "telemetry-bucket-preview"
 [[d1_databases]]
 binding = "DB"
 database_name = "rag-architect-db"
-database_id = "CHANGE_ME"
+database_id = "ba6b952e-1d76-4201-a650-aba9df3d0307"
 
 [triggers]
 crons = ["0 3 * * *"]

@@ -30,3 +30,16 @@ export async function buildAuditSubmission(
     modelVersion: 'llama-3.2-3b-instruct-q4',
   };
 }
+
+export function randomUuid(): string {
+  const cryptoObj = globalThis.crypto as { randomUUID?: () => string } | undefined;
+  if (typeof cryptoObj?.randomUUID === 'function') {
+    return cryptoObj.randomUUID();
+  }
+  // Fallback for environments without crypto.randomUUID (e.g. jsdom in unit tests).
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+    const r = Math.floor(Math.random() * 16);
+    const v = ch === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
