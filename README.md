@@ -58,6 +58,38 @@ pnpm --filter @rag-architect/db test
 pnpm --filter @rag-architect/db run check
 ```
 
+## Deployment (Cloudflare Pages → Fly + D1)
+
+Target domain: `rag-architect.helveticore.com` (independent, isolated deployment).
+
+| Service | Target |
+| :--- | :--- |
+| Portal (`rag-architect-portal`) | Cloudflare Pages — config in `apps/portal/wrangler.toml` |
+| Sizing Engine (`rag-architect-sizing`) | Fly.io — `https://rag-architect-sizing.fly.dev` |
+| Telemetry Worker | Cloudflare Workers — `https://telemetry-worker.haroudm.workers.dev` |
+| D1 (`rag-architect-db`) | binding `DB`, id `ba6b952e-1d76-4201-a650-aba9df3d0307` |
+
+### Environment variables / bindings
+
+- `DB` (D1 binding) — `rag-architect-db`, configured for **production and preview**.
+- `SIZING_ENGINE_URL` — `https://rag-architect-sizing.fly.dev` (normalized by `apps/portal/src/lib/config.ts`).
+- `TELEMETRY_WORKER_URL` — `https://telemetry-worker.haroudm.workers.dev`.
+- `AUTH_TOKEN` — **secret** shared (identical value) between `telemetry-worker` and
+  `rag-architect-portal`, in **production and preview**; set via Cloudflare
+  secrets / `.dev.vars`, never committed to `wrangler.toml`.
+
+### Ops notes
+
+- **`502 Sizing engine unavailable` fix:** an environment value carrying a Markdown
+  link (`[url](url)`) was previously passed verbatim as the fetch URL.
+  `normalizeUrl()` in `config.ts` strips Markdown wrappers, angle brackets and
+  trailing slashes, and falls back to the default on malformed values
+  (unit-tested in `config.test.ts`).
+- **21 CFR Part 11:** `POST /api/audit` inserts into `audit_submissions` (append-only).
+  `UPDATE`/`DELETE` are rejected by D1 triggers (`SQLITE_CONSTRAINT_TRIGGER`,
+  `audit_submissions is append-only`) — covered locally by `packages/db/tests/gmp.test.ts`
+  and validated end-to-end against D1.
+
 ## Governance documents
 
 - `technical_specification_rag_architect_for_gmao_v3_0_cmmi_l3_tdd.md` — governing spec (v3.0)

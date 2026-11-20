@@ -22,4 +22,35 @@ describe('deployment URL resolution (rag-architect isolation)', () => {
       'https://worker.example'
     );
   });
+
+  it('normalizes Markdown-link formatted URLs ([label](url))', () => {
+    expect(
+      resolveEngineUrl(
+        {
+          SIZING_ENGINE_URL:
+            '[https://rag-architect-sizing.fly.dev](https://rag-architect-sizing.fly.dev)',
+        },
+        false
+      )
+    ).toBe('https://rag-architect-sizing.fly.dev');
+  });
+
+  it('strips trailing slashes and angle brackets', () => {
+    expect(
+      resolveEngineUrl({ SIZING_ENGINE_URL: 'https://rag-architect-sizing.fly.dev/' }, false)
+    ).toBe('https://rag-architect-sizing.fly.dev');
+    expect(
+      resolveWorkerUrl(
+        { TELEMETRY_WORKER_URL: '<https://telemetry-worker.haroudm.workers.dev>' },
+        false
+      )
+    ).toBe('https://telemetry-worker.haroudm.workers.dev');
+  });
+
+  it('falls back to the default on malformed URLs', () => {
+    expect(resolveEngineUrl({ SIZING_ENGINE_URL: 'not-a-url' }, false)).toBe(
+      'https://rag-architect-sizing.fly.dev'
+    );
+    expect(resolveWorkerUrl({ TELEMETRY_WORKER_URL: '   ' }, true)).toBe('http://127.0.0.1:8787');
+  });
 });

@@ -121,6 +121,15 @@ zero open Critical/High defects, production sign-off.
   implemented and verified in `core/calibration.py` (TEST-CAL-001/002) and the
   telemetry worker (TEST-TEL-001/002). The RTM's portal-route mapping for the
   batch-upload endpoint remains for the M5 portal proxy.
+- **Deployment hardening — DONE (2026-11-20):** Cloudflare Pages portal wired to
+  Fly sizing engine (`rag-architect-sizing.fly.dev`) and D1 `rag-architect-db`
+  (`apps/portal/wrangler.toml`). `normalizeUrl()` in `config.ts` fixes a
+  `502 Sizing engine unavailable` caused by Markdown-formatted URL values
+  (`[url](url)`) and malformed/trailing-slash inputs (unit-tested in `config.test.ts`).
+  `AUTH_TOKEN` synchronized (secret, prod + preview) between `telemetry-worker` and
+  `rag-architect-portal`. E2E-validated: `POST /api/audit` → HTTP 200, insert into
+  `audit_submissions`, and `DELETE` blocked by `SQLITE_CONSTRAINT_TRIGGER`
+  (`audit_submissions is append-only`).
 
 
 ## 6. Immediate next actions (checklist)

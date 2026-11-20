@@ -1,0 +1,20 @@
+# flyctl launch added from .mypy_cache/.gitignore
+# Automatically created by mypy
+.mypy_cache/**/*
+
+# flyctl launch added from .pytest_cache/.gitignore
+# Created by pytest automatically.
+.pytest_cache/**/*
+
+# flyctl launch added from .ruff_cache/.gitignore
+# Automatically created by ruff.
+.ruff_cache/**/*
+
+# flyctl launch added from .venv/.gitignore
+.venv/**/*
+
+# flyctl launch added from reports/htmlcov/.gitignore
+# Created by coverage.py
+reports/htmlcov/**/*
+fly.toml
+.git
