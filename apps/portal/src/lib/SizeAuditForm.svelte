@@ -36,6 +36,7 @@
   let avgTokens = $state('420');
   let peakRatio = $state('0.40');
   let avgQueries = $state('15');
+  let targetTtft = $state('1.5');
   let electricityRate = $state('0.18');
   let safetyCritical = $state(true);
   let result = $state<SizingResult | null>(null);
@@ -71,7 +72,7 @@
         concurrency: {
           peak_shift_overlap_ratio: parseDecimal(peakRatio),
           avg_queries_per_tech_shift: parseDecimal(avgQueries),
-          target_p95_ttft_seconds: 1.5,
+          target_p95_ttft_seconds: parseDecimal(targetTtft),
         },
         financials: { electricity_rate_kwh_usd: parseDecimal(electricityRate) },
         safety_critical: safetyCritical,
@@ -102,38 +103,127 @@
   }
 </script>
 
-<section aria-label="Size audit">
+<section class="audit" aria-label="Size audit">
   <h2>Step 1 — Parameters</h2>
+
   <form>
-    <label>
-      Deployment mode
-      <select bind:value={deploymentMode}>
-        {#each MODES as mode}
-          <option value={mode}>{mode}</option>
-        {/each}
-      </select>
-    </label>
-    <label>Client name <input bind:value={clientName} type="text" /></label>
-    <label>Technicians per shift <input bind:value={technicians} type="number" min="1" /></label>
-    <label>Total shifts <input bind:value={totalShifts} type="number" min="1" /></label>
-    <label>Manuals volume (GB) <input bind:value={manualsGb} type="text" inputmode="decimal" /></label>
-    <label>Historical work orders <input bind:value={workOrders} type="number" min="0" /></label>
-    <label>Avg tokens per page <input bind:value={avgTokens} type="number" min="1" /></label>
-    <label>Peak shift overlap ratio <input bind:value={peakRatio} type="text" inputmode="decimal" /></label>
-    <label>Avg queries per tech shift <input bind:value={avgQueries} type="number" min="1" /></label>
-    <label>Electricity rate (USD/kWh) <input bind:value={electricityRate} type="text" inputmode="decimal" /></label>
-    <label><input type="checkbox" bind:checked={safetyCritical} /> Safety critical (HA)</label>
-    <button type="button" onclick={() => void submit()} disabled={loading} aria-busy={loading}>
-      {loading ? 'Sizing…' : 'Size architecture'}
-    </button>
+    <fieldset class="group">
+      <legend>Cible &amp; Exploitation</legend>
+      <div class="grid">
+        <div class="field span-2">
+          <label for="deployment-mode">Deployment mode</label>
+          <select id="deployment-mode" bind:value={deploymentMode}>
+            {#each MODES as mode}
+              <option value={mode}>{mode}</option>
+            {/each}
+          </select>
+          <span class="hint">Runtime constraint for the sized architecture</span>
+        </div>
+
+        <div class="field span-2">
+          <label for="client-name">Client name</label>
+          <input id="client-name" bind:value={clientName} type="text" autocomplete="organization" />
+          <span class="hint">Optional — defaults to Helvetic Precision Manufacturing</span>
+        </div>
+
+        <div class="field">
+          <label for="technicians">Technicians per shift</label>
+          <input id="technicians" bind:value={technicians} type="number" min="1" inputmode="numeric" />
+          <span class="hint">Headcount</span>
+        </div>
+
+        <div class="field">
+          <label for="total-shifts">Total shifts</label>
+          <input id="total-shifts" bind:value={totalShifts} type="number" min="1" inputmode="numeric" />
+          <span class="hint">Daily shifts</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Corpus documentaire</legend>
+      <div class="grid">
+        <div class="field">
+          <label for="manuals-gb">Manuals volume (GB)</label>
+          <input id="manuals-gb" bind:value={manualsGb} type="text" inputmode="decimal" />
+          <span class="hint">GB of equipment manuals (PDF)</span>
+        </div>
+
+        <div class="field">
+          <label for="work-orders">Historical work orders</label>
+          <input id="work-orders" bind:value={workOrders} type="number" min="0" inputmode="numeric" />
+          <span class="hint">Total records</span>
+        </div>
+
+        <div class="field">
+          <label for="avg-tokens">Avg tokens per page</label>
+          <input id="avg-tokens" bind:value={avgTokens} type="number" min="1" inputmode="numeric" />
+          <span class="hint">Tokens per page</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Concurrence &amp; Latence</legend>
+      <div class="grid">
+        <div class="field">
+          <label for="peak-ratio">Peak shift overlap ratio</label>
+          <input id="peak-ratio" bind:value={peakRatio} type="text" inputmode="decimal" />
+          <span class="hint">0–1 (e.g. 0.40)</span>
+        </div>
+
+        <div class="field">
+          <label for="avg-queries">Avg queries per tech shift</label>
+          <input id="avg-queries" bind:value={avgQueries} type="number" min="1" inputmode="numeric" />
+          <span class="hint">Queries per shift</span>
+        </div>
+
+        <div class="field">
+          <label for="target-ttft">Target P95 TTFT</label>
+          <input id="target-ttft" bind:value={targetTtft} type="text" inputmode="decimal" />
+          <span class="hint">Seconds (e.g. 1.5)</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Énergie &amp; TCO</legend>
+      <div class="grid">
+        <div class="field">
+          <label for="electricity">Electricity rate (USD/kWh)</label>
+          <input id="electricity" bind:value={electricityRate} type="text" inputmode="decimal" />
+          <span class="hint">USD per kWh</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Sécurité / Haute Disponibilité</legend>
+      <div class="grid">
+        <div class="field checkbox">
+          <div class="check-row">
+            <input id="safety-critical" type="checkbox" bind:checked={safetyCritical} />
+            <label for="safety-critical">Safety critical (HA)</label>
+          </div>
+          <span class="hint">Enforces the zero-hallucination gate and high-availability sizing</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="button" onclick={() => void submit()} disabled={loading} aria-busy={loading}>
+        {#if loading}<span class="spinner" aria-hidden="true"></span>Sizing…{:else}Size architecture{/if}
+      </button>
+    </div>
   </form>
+
   {#if error}
-    <p role="alert">{error}</p>
+    <p class="error" role="alert">{error}</p>
   {/if}
 </section>
 
 {#if result}
-  <section aria-label="Sizing results">
+  <section class="results" aria-label="Sizing results">
     <h2>Step 2 — Results</h2>
     <div class="tco" aria-label="TCO comparison">
       <p>CAPEX {currency(result.verdict.tco_3year_comparison.capex_edge_total_usd)}</p>
@@ -152,21 +242,174 @@
 {/if}
 
 <style>
-  label {
-    display: block;
-    margin: 0.5rem 0;
+  .audit,
+  .results {
+    max-width: 52rem;
+    margin: 0 auto;
   }
+
+  h2 {
+    font-size: 1.25rem;
+    margin: 1.5rem 0 0.75rem;
+  }
+
+  .group {
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    padding: 1rem 1.25rem 1.25rem;
+    margin: 0 0 1rem;
+  }
+
+  legend {
+    font-weight: 600;
+    padding: 0 0.5rem;
+    color: #1f2937;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+    align-items: start;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    min-width: 0;
+  }
+
+  .field.span-2 {
+    grid-column: 1 / -1;
+  }
+
+  .field > label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #111827;
+  }
+
+  .hint {
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
   input,
-  select,
-  button {
+  select {
+    width: 100%;
+    min-width: 0;
     min-height: 44px; /* WCAG 2.5.8 target size (>=44x44px) for factory-floor touch */
+    padding: 0.5rem 0.75rem;
     font-size: 1rem;
+    color: #111827;
+    background: #fff;
+    border: 1px solid #9ca3af;
+    border-radius: 0.375rem;
+    box-sizing: border-box;
   }
+
+  input:focus-visible,
+  select:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+    border-color: #2563eb;
+  }
+
+  .checkbox .check-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+  }
+
+  .checkbox input {
+    width: 1.5rem;
+    height: 1.5rem;
+    min-height: 1.5rem;
+    accent-color: #2563eb;
+  }
+
+  .checkbox label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #111827;
+  }
+
+  .actions {
+    margin-top: 0.5rem;
+  }
+
   button {
-    padding: 0.5rem 1rem;
+    min-height: 44px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background: #2563eb;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
   }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  button:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 2px;
+  }
+
+  .spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .error {
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    margin: 0.75rem 0 1rem;
+  }
+
   .tco,
   .vram {
     font-variant-numeric: tabular-nums;
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    background: #f9fafb;
+    margin: 0.5rem 0;
+  }
+
+  .tco p,
+  .vram p {
+    margin: 0;
+  }
+
+  @media (max-width: 40rem) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
