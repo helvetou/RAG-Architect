@@ -1,8 +1,10 @@
 """FastAPI routes for the sizing engine (REQ-API-001).
 
 Deterministic ``POST /api/v1/size-architecture`` endpoint returning the
-``aud-gmao-2026-001`` verification vector.
+``aud-gmao-2026-001`` verification vector with catalog-driven hardware
+selection and a sizing rationale (REQ-MATH-003, REQ-FIN-001).
 """
+from dataclasses import asdict
 from typing import Any
 
 from fastapi import FastAPI
@@ -10,13 +12,14 @@ from pydantic import BaseModel
 
 from core.calculator import (
     DocumentProfile,
-    HardwareSpec,
     ModelSpec,
     compute_3year_tco,
     compute_active_streams,
-    compute_total_child_chunks,
+    compute_chunk_breakdown,
     compute_vram_allocation,
 )
+from core.hardware_selection import CATALOG, select_hardware
+from core.trace import build_calculation_trace
 
 
 class Documents(BaseModel):
@@ -60,16 +63,6 @@ _REFERENCE_MODEL = ModelSpec(
     kv_cache_bits=8,
 )
 
-_REFERENCE_HARDWARE = HardwareSpec(
-    hardware_id="rugged-edge-l4-24g",
-    name="Industrial Rugged Server NVIDIA L4 (24GB)",
-    vram_gb=24.0,
-    system_ram_gb=128.0,
-    tdp_watts=300,
-    unit_cost_capex_usd=8210.0,
-    monthly_maint_opex_usd=100.0,
-)
-
 _SEQUENCE_LENGTH = 5800
 _CHILD_CHUNK_SIZE_TOKENS = 200
 
@@ -86,7 +79,8 @@ def size_architecture(request: SizeRequest) -> dict[str, Any]:
         average_tokens_per_page=request.documents.average_tokens_per_page,
         child_chunk_size_tokens=_CHILD_CHUNK_SIZE_TOKENS,
     )
-    total_chunks = compute_total_child_chunks(docs)
+    chunk = compute_chunk_breakdown(docs)
+    total_chunks = chunk.child_chunks
     vram = compute_vram_allocation(
         model=_REFERENCE_MODEL,
         active_streams=active_streams,
@@ -94,8 +88,16 @@ def size_architecture(request: SizeRequest) -> dict[str, Any]:
         total_child_chunks=total_chunks,
         calibration_multiplier=1.0,
     )
+
+    selected_hardware, quantity = select_hardware(
+        catalog=CATALOG,
+        total_vram=vram.total_vram_required_gb,
+        deployment_constraint=request.deployment_constraint,
+        safety_critical=request.safety_critical,
+        electricity_rate=request.financials.electricity_rate_kwh_usd,
+    )
     tco = compute_3year_tco(
-        hardware=_REFERENCE_HARDWARE,
+        hardware=selected_hardware,
         total_vram_required_gb=vram.total_vram_required_gb,
         safety_critical=request.safety_critical,
         technicians_per_shift=request.technicians_per_shift,
@@ -103,19 +105,50 @@ def size_architecture(request: SizeRequest) -> dict[str, Any]:
         avg_queries_per_tech_shift=request.concurrency.avg_queries_per_tech_shift,
         electricity_rate_kwh_usd=request.financials.electricity_rate_kwh_usd,
     )
+    recommended_decision = tco.recommended_decision
+    if request.deployment_constraint == "FULL_CLOUD":
+        recommended_decision = "OPEX_CLOUD_MANAGED"
+
+    calculations = [
+        asdict(step)
+        for step in build_calculation_trace(
+            model=_REFERENCE_MODEL,
+            hardware=selected_hardware,
+            quantity=quantity,
+            active_streams=active_streams,
+            sequence_length=_SEQUENCE_LENGTH,
+            docs=docs,
+            chunk=chunk,
+            vram=vram,
+            tco=tco,
+            safety_critical=request.safety_critical,
+            technicians=request.technicians_per_shift,
+            total_shifts=request.total_shifts,
+            avg_queries=request.concurrency.avg_queries_per_tech_shift,
+            peak_shift_overlap_ratio=request.concurrency.peak_shift_overlap_ratio,
+            electricity_rate=request.financials.electricity_rate_kwh_usd,
+            deployment_constraint=request.deployment_constraint,
+            calibration_multiplier=1.0,
+        )
+    ]
 
     return {
         "audit_id": request.audit_id,
+        "calculations": calculations,
         "verdict": {
             "deployment_mode": request.deployment_constraint,
             "recommended_hardware": [
                 {
-                    "hardware_id": _REFERENCE_HARDWARE.hardware_id,
-                    "name": _REFERENCE_HARDWARE.name,
-                    "quantity": tco.recommended_quantity,
-                    "vram_per_unit_gb": _REFERENCE_HARDWARE.vram_gb,
-                    "system_ram_gb": _REFERENCE_HARDWARE.system_ram_gb,
-                    "role": "Active-Active HA Edge Inference & Vector Storage",
+                    "hardware_id": selected_hardware.hardware_id,
+                    "name": selected_hardware.name,
+                    "quantity": quantity,
+                    "vram_per_unit_gb": selected_hardware.vram_gb,
+                    "system_ram_gb": selected_hardware.system_ram_gb,
+                    "role": (
+                        "Active-Active HA Edge Inference & Vector Storage"
+                        if request.safety_critical
+                        else "Edge Inference & Vector Storage"
+                    ),
                 }
             ],
             "model_stack": {
@@ -139,13 +172,24 @@ def size_architecture(request: SizeRequest) -> dict[str, Any]:
                 "generator_top_k": 5,
                 "zero_hallucination_gate": "ENABLED",
             },
+            "sizing_rationale": {
+                "total_vram_required_gb": round(vram.total_vram_required_gb, 2),
+                "selected_hardware_id": selected_hardware.hardware_id,
+                "selected_hardware_name": selected_hardware.name,
+                "quantity": quantity,
+                "vram_per_unit_gb": selected_hardware.vram_gb,
+                "vram_utilization_pct": round(
+                    vram.total_vram_required_gb / selected_hardware.vram_gb * 100, 1
+                ),
+                "ha_redundancy": request.safety_critical,
+            },
             "tco_3year_comparison": {
                 "hardware_capex_usd": round(tco.hardware_capex_usd, 2),
                 "energy_and_maint_3yr_usd": round(tco.energy_and_maint_3yr_usd, 2),
                 "capex_edge_total_usd": round(tco.capex_edge_total_usd, 2),
                 "opex_cloud_total_usd": round(tco.opex_cloud_total_usd, 2),
                 "net_savings_usd": round(tco.net_savings_usd, 2),
-                "recommended_decision": tco.recommended_decision,
+                "recommended_decision": recommended_decision,
             },
         },
     }

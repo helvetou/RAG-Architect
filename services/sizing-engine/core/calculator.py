@@ -53,6 +53,7 @@ class HardwareSpec:
     tdp_watts: int
     unit_cost_capex_usd: float
     monthly_maint_opex_usd: float
+    tier: str = "EDGE_RUGGED_SERVER"
 
 
 @dataclass(frozen=True)
@@ -64,11 +65,20 @@ class DocumentProfile:
 
 
 @dataclass(frozen=True)
+class ChunkCalculation:
+    manuals_tokens: float
+    work_order_tokens: float
+    total_tokens: float
+    child_chunks: int
+
+
+@dataclass(frozen=True)
 class VramAllocation:
     weights_vram_gb: float
     kv_cache_vram_gb: float
     vector_db_vram_gb: float
     reranker_vram_gb: float
+    headroom_vram_gb: float
     total_vram_required_gb: float
 
 
@@ -102,14 +112,25 @@ def compute_kv_cache_gb(active_streams: int, sequence_length: int, model: ModelS
     )
 
 
-def compute_total_child_chunks(docs: DocumentProfile) -> int:
-    """Section 5.2: manuals + work orders -> indexed child chunks with 15% overlap."""
+def compute_chunk_breakdown(docs: DocumentProfile) -> ChunkCalculation:
+    """Section 5.2: token breakdown (manuals + work orders) and child chunks."""
     manuals_tokens = docs.equipment_manuals_pdf_gb * PAGES_PER_GB * docs.average_tokens_per_page
     work_order_tokens = docs.historical_work_orders_count * WORK_ORDER_TOKENS
     total_tokens = manuals_tokens + work_order_tokens
-    return math.ceil(
+    child_chunks = math.ceil(
         total_tokens * CHUNK_OVERLAP_NUM / (docs.child_chunk_size_tokens * CHUNK_OVERLAP_DEN)
     )
+    return ChunkCalculation(
+        manuals_tokens=manuals_tokens,
+        work_order_tokens=work_order_tokens,
+        total_tokens=total_tokens,
+        child_chunks=child_chunks,
+    )
+
+
+def compute_total_child_chunks(docs: DocumentProfile) -> int:
+    """Section 5.2: manuals + work orders -> indexed child chunks with 15% overlap."""
+    return compute_chunk_breakdown(docs).child_chunks
 
 
 def compute_vram_allocation(
@@ -133,8 +154,19 @@ def compute_vram_allocation(
         kv_cache_vram_gb=kv_cache,
         vector_db_vram_gb=vector_db,
         reranker_vram_gb=reranker,
+        headroom_vram_gb=headroom,
         total_vram_required_gb=total,
     )
+
+
+def compute_quantity(
+    total_vram_required_gb: float, hardware: HardwareSpec, safety_critical: bool
+) -> int:
+    """Section 5.3: units required = ceil(VRAM / per-unit VRAM), HA minimum 2."""
+    quantity = math.ceil(total_vram_required_gb / hardware.vram_gb)
+    if safety_critical:
+        quantity = max(2, quantity)
+    return quantity
 
 
 def compute_3year_tco(
@@ -147,9 +179,7 @@ def compute_3year_tco(
     electricity_rate_kwh_usd: float,
 ) -> TcoResult:
     """Section 5.3: 36-month edge CAPEX vs cloud OPEX TCO."""
-    quantity = math.ceil(total_vram_required_gb / hardware.vram_gb)
-    if safety_critical:
-        quantity = max(2, quantity)
+    quantity = compute_quantity(total_vram_required_gb, hardware, safety_critical)
 
     hardware_capex = hardware.unit_cost_capex_usd * quantity
     energy_monthly = (
