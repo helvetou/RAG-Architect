@@ -60,6 +60,8 @@ describe('TEST-DB-001 — Schema columns (REQ-DB-001)', () => {
         'outputPayloadSha256',
         'specVersion',
         'modelVersion',
+        'inputPayloadJson',
+        'outputPayloadJson',
       ]),
     );
   });

@@ -51,11 +51,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   // immutable audit trail cannot be written.
   if (db) {
     try {
-      const submission = await buildAuditSubmission(
-        'portal-bff',
-        JSON.stringify(parsed.data),
-        JSON.stringify(result)
-      );
+      const inputJson = JSON.stringify(parsed.data);
+      const outputJson = JSON.stringify(result);
+      const submission = await buildAuditSubmission('portal-bff', inputJson, outputJson);
       await db
         .prepare(
           `INSERT INTO audit_submissions
@@ -63,8 +61,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
             work_orders_count, avg_tokens_per_page, deployment_constraint,
             peak_query_ratio, avg_queries_per_tech_shift, electricity_rate_kwh_usd,
             target_p95_ttft_seconds, created_at, actor_id, input_payload_sha256,
-            output_payload_sha256, spec_version, model_version)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            output_payload_sha256, input_payload_json, output_payload_json,
+            spec_version, model_version)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .bind(
           parsed.data.audit_id,
@@ -83,6 +82,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
           submission.actorId,
           submission.inputPayloadSha256,
           submission.outputPayloadSha256,
+          inputJson,
+          outputJson,
           submission.specVersion,
           submission.modelVersion
         )

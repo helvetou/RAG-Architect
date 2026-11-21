@@ -15,6 +15,13 @@
       "when": 1795076123575,
       "tag": "0001_powerful_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795249477531,
+      "tag": "0002_woozy_gunslinger",
+      "breakpoints": true
     }
   ]
 }

@@ -52,6 +52,9 @@ export const auditSubmissions = sqliteTable('audit_submissions', {
   outputPayloadSha256: text('output_payload_sha256').notNull().default(''),
   specVersion: text('spec_version').notNull().default('SPEC-GMAO-RAG-ARCH-003'),
   modelVersion: text('model_version').notNull().default('llama-3.2-3b-instruct-q4'),
+  // 21 CFR Part 11 replayable payloads (full input/output JSON, not just hashes)
+  inputPayloadJson: text('input_payload_json').default('').notNull(),
+  outputPayloadJson: text('output_payload_json').default('').notNull(),
 });
 
 // Multi-Tier Telemetry Calibration State (Traceability: REQ-CAL-001)

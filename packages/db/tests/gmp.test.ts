@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { eq } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 
 import { auditSubmissions, hardwareCatalog, modelRegistry } from '../src/schema';
@@ -57,10 +58,21 @@ describe('TEST-GMP-004 — 21 CFR Part 11 immutable audit trail', () => {
         actorId: 'qa-engineer-1',
         inputPayloadSha256: inputHash,
         outputPayloadSha256: outputHash,
+        inputPayloadJson: input,
+        outputPayloadJson: output,
         specVersion: 'SPEC-GMAO-RAG-ARCH-003',
         modelVersion: 'llama-3.2-3b-instruct-q4',
       })
       .run();
+
+    // Replayability: the full payloads are persisted verbatim (not just hashes).
+    const stored = db
+      .select()
+      .from(auditSubmissions)
+      .where(eq(auditSubmissions.id, 'audit-gmp-004'))
+      .get();
+    expect(stored?.inputPayloadJson).toBe(input);
+    expect(stored?.outputPayloadJson).toBe(output);
 
     // Append-only: UPDATE must raise SQLite ABORT (migration 0001 trigger)
     expect(() => db.update(auditSubmissions).set({ actorId: 'tampered' }).run()).toThrow();
