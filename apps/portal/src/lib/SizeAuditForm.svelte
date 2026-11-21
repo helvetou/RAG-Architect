@@ -4,10 +4,20 @@
 
   const MODES = ['AIR_GAPPED_EDGE', 'HYBRID_CONNECTED', 'FULL_CLOUD'] as const;
 
+  type RecommendedHardware = {
+    hardware_id: string;
+    name: string;
+    quantity: number;
+    vram_per_unit_gb: number;
+    system_ram_gb: number;
+    role: string;
+  };
+
   type SizingResult = {
     audit_id: string;
     verdict: {
       deployment_mode: string;
+      recommended_hardware: RecommendedHardware[];
       model_stack: {
         weights_vram_gb: number;
         kv_cache_allocated_gb: number;
@@ -16,6 +26,15 @@
         max_concurrent_streams: number;
       };
       rag_parameters: { estimated_total_child_chunks: number };
+      sizing_rationale: {
+        total_vram_required_gb: number;
+        selected_hardware_id: string;
+        selected_hardware_name: string;
+        quantity: number;
+        vram_per_unit_gb: number;
+        vram_utilization_pct: number;
+        ha_redundancy: boolean;
+      };
       tco_3year_comparison: {
         hardware_capex_usd: number;
         energy_and_maint_3yr_usd: number;
@@ -41,6 +60,7 @@
   let safetyCritical = $state(true);
   let result = $state<SizingResult | null>(null);
   let error = $state('');
+  let fieldErrors = $state<Record<string, string>>({});
   let loading = $state(false);
 
   const currency = (value: number) =>
@@ -48,11 +68,62 @@
 
   const parseDecimal = (value: string | number): number => Number(String(value).replace(',', '.'));
 
+  function validate(): Record<string, string> {
+    const errors: Record<string, string> = {};
+    const techniciansValue = String(technicians ?? '').trim();
+    if (!techniciansValue) {
+      errors.technicians = 'Technicians per shift is required';
+    } else if (!Number.isFinite(parseDecimal(techniciansValue)) || parseDecimal(techniciansValue) < 1) {
+      errors.technicians = 'Enter a whole number ≥ 1';
+    }
+
+    const numeric: Array<[string, string, (v: number) => boolean, string]> = [
+      ['totalShifts', totalShifts, (v) => v >= 1 && Number.isInteger(v), 'Enter a whole number ≥ 1'],
+      ['manualsGb', manualsGb, (v) => v >= 0, 'Enter a number ≥ 0'],
+      ['workOrders', workOrders, (v) => v >= 0 && Number.isInteger(v), 'Enter a whole number ≥ 0'],
+      ['avgTokens', avgTokens, (v) => v >= 1, 'Enter a number ≥ 1'],
+      ['avgQueries', avgQueries, (v) => v >= 1 && Number.isInteger(v), 'Enter a whole number ≥ 1'],
+      ['targetTtft', targetTtft, (v) => v > 0, 'Enter a number > 0'],
+      ['electricityRate', electricityRate, (v) => v >= 0, 'Enter a number ≥ 0'],
+    ];
+    for (const [key, raw, ok, message] of numeric) {
+      const value = parseDecimal(raw);
+      if (!Number.isFinite(value) || !ok(value)) errors[key] = message;
+    }
+
+    const ratio = parseDecimal(peakRatio);
+    if (!Number.isFinite(ratio) || ratio < 0 || ratio > 1) {
+      errors.peakRatio = 'Enter a ratio between 0 and 1';
+    }
+    return errors;
+  }
+
+  function vramParts(r: SizingResult) {
+    const m = r.verdict.model_stack;
+    const other = Math.max(
+      0,
+      m.total_vram_required_gb - m.weights_vram_gb - m.kv_cache_allocated_gb - m.vector_db_vram_gb
+    );
+    const total = m.total_vram_required_gb || 1;
+    const mk = (label: string, value: number) => ({
+      label,
+      value,
+      pct: Math.max(0, (value / total) * 100),
+    });
+    return [
+      mk('Weights', m.weights_vram_gb),
+      mk('KV cache', m.kv_cache_allocated_gb),
+      mk('VectorDB', m.vector_db_vram_gb),
+      mk('Reranker + headroom', other),
+    ];
+  }
+
   async function submit() {
     error = '';
     result = null;
-    if (!technicians) {
-      error = 'Technicians per shift is required';
+    fieldErrors = validate();
+    if (Object.keys(fieldErrors).length > 0) {
+      error = 'Please fix the highlighted fields.';
       return;
     }
 
@@ -104,9 +175,9 @@
 </script>
 
 <section class="audit" aria-label="Size audit">
-  <h2>Step 1 — Parameters</h2>
+  <h2 class="section-title">1 · Paramètres</h2>
 
-  <form>
+  <form novalidate>
     <fieldset class="group">
       <legend>Cible &amp; Exploitation</legend>
       <div class="grid">
@@ -117,25 +188,47 @@
               <option value={mode}>{mode}</option>
             {/each}
           </select>
-          <span class="hint">Runtime constraint for the sized architecture</span>
+          <span class="hint">Contrainte d'exécution de l'architecture dimensionnée</span>
         </div>
 
         <div class="field span-2">
           <label for="client-name">Client name</label>
           <input id="client-name" bind:value={clientName} type="text" autocomplete="organization" />
-          <span class="hint">Optional — defaults to Helvetic Precision Manufacturing</span>
+          <span class="hint">Optionnel — défaut : Helvetic Precision Manufacturing</span>
         </div>
 
         <div class="field">
           <label for="technicians">Technicians per shift</label>
-          <input id="technicians" bind:value={technicians} type="number" min="1" inputmode="numeric" />
-          <span class="hint">Headcount</span>
+          <input
+            id="technicians"
+            bind:value={technicians}
+            type="number"
+            min="1"
+            inputmode="numeric"
+            aria-invalid={fieldErrors.technicians ? 'true' : undefined}
+            aria-describedby={fieldErrors.technicians ? 'technicians-error' : undefined}
+          />
+          <span class="hint">Effectif par équipe</span>
+          {#if fieldErrors.technicians}
+            <p class="field-error" id="technicians-error">{fieldErrors.technicians}</p>
+          {/if}
         </div>
 
         <div class="field">
           <label for="total-shifts">Total shifts</label>
-          <input id="total-shifts" bind:value={totalShifts} type="number" min="1" inputmode="numeric" />
-          <span class="hint">Daily shifts</span>
+          <input
+            id="total-shifts"
+            bind:value={totalShifts}
+            type="number"
+            min="1"
+            inputmode="numeric"
+            aria-invalid={fieldErrors.totalShifts ? 'true' : undefined}
+            aria-describedby={fieldErrors.totalShifts ? 'total-shifts-error' : undefined}
+          />
+          <span class="hint">Équipes par jour</span>
+          {#if fieldErrors.totalShifts}
+            <p class="field-error" id="total-shifts-error">{fieldErrors.totalShifts}</p>
+          {/if}
         </div>
       </div>
     </fieldset>
@@ -145,20 +238,52 @@
       <div class="grid">
         <div class="field">
           <label for="manuals-gb">Manuals volume (GB)</label>
-          <input id="manuals-gb" bind:value={manualsGb} type="text" inputmode="decimal" />
-          <span class="hint">GB of equipment manuals (PDF)</span>
+          <input
+            id="manuals-gb"
+            bind:value={manualsGb}
+            type="text"
+            inputmode="decimal"
+            aria-invalid={fieldErrors.manualsGb ? 'true' : undefined}
+            aria-describedby={fieldErrors.manualsGb ? 'manuals-gb-error' : undefined}
+          />
+          <span class="hint">Go de manuels équipement (PDF)</span>
+          {#if fieldErrors.manualsGb}
+            <p class="field-error" id="manuals-gb-error">{fieldErrors.manualsGb}</p>
+          {/if}
         </div>
 
         <div class="field">
           <label for="work-orders">Historical work orders</label>
-          <input id="work-orders" bind:value={workOrders} type="number" min="0" inputmode="numeric" />
-          <span class="hint">Total records</span>
+          <input
+            id="work-orders"
+            bind:value={workOrders}
+            type="number"
+            min="0"
+            inputmode="numeric"
+            aria-invalid={fieldErrors.workOrders ? 'true' : undefined}
+            aria-describedby={fieldErrors.workOrders ? 'work-orders-error' : undefined}
+          />
+          <span class="hint">Nombre total d'ordres de travail</span>
+          {#if fieldErrors.workOrders}
+            <p class="field-error" id="work-orders-error">{fieldErrors.workOrders}</p>
+          {/if}
         </div>
 
         <div class="field">
           <label for="avg-tokens">Avg tokens per page</label>
-          <input id="avg-tokens" bind:value={avgTokens} type="number" min="1" inputmode="numeric" />
-          <span class="hint">Tokens per page</span>
+          <input
+            id="avg-tokens"
+            bind:value={avgTokens}
+            type="number"
+            min="1"
+            inputmode="numeric"
+            aria-invalid={fieldErrors.avgTokens ? 'true' : undefined}
+            aria-describedby={fieldErrors.avgTokens ? 'avg-tokens-error' : undefined}
+          />
+          <span class="hint">Tokens par page</span>
+          {#if fieldErrors.avgTokens}
+            <p class="field-error" id="avg-tokens-error">{fieldErrors.avgTokens}</p>
+          {/if}
         </div>
       </div>
     </fieldset>
@@ -168,20 +293,51 @@
       <div class="grid">
         <div class="field">
           <label for="peak-ratio">Peak shift overlap ratio</label>
-          <input id="peak-ratio" bind:value={peakRatio} type="text" inputmode="decimal" />
-          <span class="hint">0–1 (e.g. 0.40)</span>
+          <input
+            id="peak-ratio"
+            bind:value={peakRatio}
+            type="text"
+            inputmode="decimal"
+            aria-invalid={fieldErrors.peakRatio ? 'true' : undefined}
+            aria-describedby={fieldErrors.peakRatio ? 'peak-ratio-error' : undefined}
+          />
+          <span class="hint">0–1 (ex. 0.40)</span>
+          {#if fieldErrors.peakRatio}
+            <p class="field-error" id="peak-ratio-error">{fieldErrors.peakRatio}</p>
+          {/if}
         </div>
 
         <div class="field">
           <label for="avg-queries">Avg queries per tech shift</label>
-          <input id="avg-queries" bind:value={avgQueries} type="number" min="1" inputmode="numeric" />
-          <span class="hint">Queries per shift</span>
+          <input
+            id="avg-queries"
+            bind:value={avgQueries}
+            type="number"
+            min="1"
+            inputmode="numeric"
+            aria-invalid={fieldErrors.avgQueries ? 'true' : undefined}
+            aria-describedby={fieldErrors.avgQueries ? 'avg-queries-error' : undefined}
+          />
+          <span class="hint">Requêtes par équipe</span>
+          {#if fieldErrors.avgQueries}
+            <p class="field-error" id="avg-queries-error">{fieldErrors.avgQueries}</p>
+          {/if}
         </div>
 
         <div class="field">
           <label for="target-ttft">Target P95 TTFT</label>
-          <input id="target-ttft" bind:value={targetTtft} type="text" inputmode="decimal" />
-          <span class="hint">Seconds (e.g. 1.5)</span>
+          <input
+            id="target-ttft"
+            bind:value={targetTtft}
+            type="text"
+            inputmode="decimal"
+            aria-invalid={fieldErrors.targetTtft ? 'true' : undefined}
+            aria-describedby={fieldErrors.targetTtft ? 'target-ttft-error' : undefined}
+          />
+          <span class="hint">Secondes (ex. 1.5)</span>
+          {#if fieldErrors.targetTtft}
+            <p class="field-error" id="target-ttft-error">{fieldErrors.targetTtft}</p>
+          {/if}
         </div>
       </div>
     </fieldset>
@@ -191,22 +347,28 @@
       <div class="grid">
         <div class="field">
           <label for="electricity">Electricity rate (USD/kWh)</label>
-          <input id="electricity" bind:value={electricityRate} type="text" inputmode="decimal" />
-          <span class="hint">USD per kWh</span>
+          <input
+            id="electricity"
+            bind:value={electricityRate}
+            type="text"
+            inputmode="decimal"
+            aria-invalid={fieldErrors.electricityRate ? 'true' : undefined}
+            aria-describedby={fieldErrors.electricityRate ? 'electricity-error' : undefined}
+          />
+          <span class="hint">USD par kWh</span>
+          {#if fieldErrors.electricityRate}
+            <p class="field-error" id="electricity-error">{fieldErrors.electricityRate}</p>
+          {/if}
         </div>
       </div>
     </fieldset>
 
     <fieldset class="group">
       <legend>Sécurité / Haute Disponibilité</legend>
-      <div class="grid">
-        <div class="field checkbox">
-          <div class="check-row">
-            <input id="safety-critical" type="checkbox" bind:checked={safetyCritical} />
-            <label for="safety-critical">Safety critical (HA)</label>
-          </div>
-          <span class="hint">Enforces the zero-hallucination gate and high-availability sizing</span>
-        </div>
+      <div class="check-row">
+        <input id="safety-critical" type="checkbox" bind:checked={safetyCritical} />
+        <label for="safety-critical">Safety critical (HA)</label>
+        <span class="hint">Active la redondance actif-actif et la gate zéro-hallucination</span>
       </div>
     </fieldset>
 
@@ -224,20 +386,60 @@
 
 {#if result}
   <section class="results" aria-label="Sizing results">
-    <h2>Step 2 — Results</h2>
-    <div class="tco" aria-label="TCO comparison">
-      <p>CAPEX {currency(result.verdict.tco_3year_comparison.capex_edge_total_usd)}</p>
-      <p>OPEX {currency(result.verdict.tco_3year_comparison.opex_cloud_total_usd)}</p>
+    <h2 class="section-title">2 · Résultats</h2>
+
+    <div class="kpis">
+      <div class="kpi">
+        <p class="kpi-value">CAPEX {currency(result.verdict.tco_3year_comparison.capex_edge_total_usd)}</p>
+        <span class="kpi-label">Edge on-prem · 3 ans</span>
+      </div>
+      <div class="kpi">
+        <p class="kpi-value">OPEX {currency(result.verdict.tco_3year_comparison.opex_cloud_total_usd)}</p>
+        <span class="kpi-label">Cloud managé · 3 ans</span>
+      </div>
+      <div class="kpi">
+        <p class="kpi-value">Économies {currency(result.verdict.tco_3year_comparison.net_savings_usd)}</p>
+        <span class="kpi-label">Net · 3 ans</span>
+      </div>
+      <div class="kpi decision">
+        <p class="kpi-value">{result.verdict.tco_3year_comparison.recommended_decision}</p>
+        <span class="kpi-label">Recommended decision</span>
+      </div>
     </div>
-    <div class="vram" aria-label="VRAM breakdown">
-      <p>Weights {result.verdict.model_stack.weights_vram_gb.toFixed(2)} GB</p>
-      <p>KV cache {result.verdict.model_stack.kv_cache_allocated_gb.toFixed(2)} GB</p>
-      <p>VectorDB {result.verdict.model_stack.vector_db_vram_gb.toFixed(2)} GB</p>
-      <p>Total {result.verdict.model_stack.total_vram_required_gb.toFixed(2)} GB</p>
-      <p>Max concurrent streams {result.verdict.model_stack.max_concurrent_streams}</p>
+
+    {#if result.verdict.recommended_hardware?.[0]}
+      <div class="hardware-card">
+        <h3>Matériel recommandé</h3>
+        <p class="hw-name">
+          {result.verdict.recommended_hardware[0].name}
+          <span class="hw-qty">× {result.verdict.recommended_hardware[0].quantity}</span>
+        </p>
+        <p class="hw-meta">
+          {result.verdict.recommended_hardware[0].vram_per_unit_gb} GB VRAM / unité ·
+          {result.verdict.sizing_rationale?.vram_utilization_pct ?? '—'} % utilisés ·
+          {result.verdict.recommended_hardware[0].role}
+        </p>
+      </div>
+    {/if}
+
+    <div class="vram">
+      <h3>Ventilation VRAM</h3>
+      {#each vramParts(result) as part}
+        <div class="bar-row">
+          <span class="bar-label">{part.label}</span>
+          <div class="bar-track"><div class="bar-fill" style="width: {part.pct}%"></div></div>
+          <span class="bar-value">{part.value.toFixed(2)} GB</span>
+        </div>
+      {/each}
+      <p class="vram-total">
+        Total {result.verdict.model_stack.total_vram_required_gb.toFixed(2)} GB ·
+        {result.verdict.model_stack.max_concurrent_streams} streams · {result.verdict.rag_parameters.estimated_total_child_chunks} chunks
+      </p>
     </div>
-    <p>Chunks {result.verdict.rag_parameters.estimated_total_child_chunks}</p>
-    <p>Recommended decision: {result.verdict.tco_3year_comparison.recommended_decision}</p>
+
+    <p class="calc-link-wrap">
+      <a class="calc-link" href={`/audit/${result.audit_id}/calculations`}>Voir le détail des calculs →</a>
+    </p>
   </section>
 {/if}
 
@@ -248,17 +450,19 @@
     margin: 0 auto;
   }
 
-  h2 {
-    font-size: 1.25rem;
-    margin: 1.5rem 0 0.75rem;
+  .section-title {
+    font-size: 1.15rem;
+    margin: 0 0 0.75rem;
+    color: #0b1220;
   }
 
   .group {
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
     background: #fff;
     padding: 1rem 1.25rem 1.25rem;
     margin: 0 0 1rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   }
 
   legend {
@@ -285,7 +489,8 @@
     grid-column: 1 / -1;
   }
 
-  .field > label {
+  .field > label,
+  .check-row label {
     font-weight: 500;
     font-size: 0.875rem;
     color: #111827;
@@ -293,48 +498,53 @@
 
   .hint {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--muted);
   }
 
   input,
   select {
     width: 100%;
     min-width: 0;
-    min-height: 44px; /* WCAG 2.5.8 target size (>=44x44px) for factory-floor touch */
+    min-height: 44px;
     padding: 0.5rem 0.75rem;
     font-size: 1rem;
     color: #111827;
     background: #fff;
     border: 1px solid #9ca3af;
-    border-radius: 0.375rem;
-    box-sizing: border-box;
+    border-radius: 0.5rem;
   }
 
   input:focus-visible,
   select:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--brand);
     outline-offset: 1px;
-    border-color: #2563eb;
+    border-color: var(--brand);
   }
 
-  .checkbox .check-row {
+  input[aria-invalid='true'] {
+    border-color: #dc2626;
+  }
+
+  .field-error {
+    margin: 0;
+    color: #b91c1c;
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  .check-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-wrap: wrap;
     min-height: 44px;
   }
 
-  .checkbox input {
+  .check-row input {
     width: 1.5rem;
     height: 1.5rem;
     min-height: 1.5rem;
-    accent-color: #2563eb;
-  }
-
-  .checkbox label {
-    font-weight: 500;
-    font-size: 0.875rem;
-    color: #111827;
+    accent-color: var(--brand);
   }
 
   .actions {
@@ -347,9 +557,9 @@
     font-size: 1rem;
     font-weight: 600;
     color: #fff;
-    background: #2563eb;
+    background: var(--brand);
     border: none;
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -362,7 +572,7 @@
   }
 
   button:focus-visible {
-    outline: 2px solid #1d4ed8;
+    outline: 2px solid var(--brand-dark);
     outline-offset: 2px;
   }
 
@@ -386,30 +596,148 @@
     background: #fef2f2;
     border: 1px solid #fecaca;
     padding: 0.75rem 1rem;
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
     margin: 0.75rem 0 1rem;
   }
 
-  .tco,
-  .vram {
-    font-variant-numeric: tabular-nums;
+  .kpis {
     display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .kpi {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    padding: 0.875rem 1rem;
+    display: flex;
+    flex-direction: column;
     gap: 0.25rem;
-    padding: 0.75rem 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.375rem;
-    background: #f9fafb;
-    margin: 0.5rem 0;
   }
 
-  .tco p,
-  .vram p {
+  .kpi.decision {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+  }
+
+  .kpi-value {
     margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
   }
 
-  @media (max-width: 40rem) {
+  .kpi.decision .kpi-value {
+    color: #065f46;
+    font-size: 0.9rem;
+    word-break: break-word;
+  }
+
+  .kpi-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .hardware-card,
+  .vram {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .hardware-card h3,
+  .vram h3 {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    color: #1f2937;
+  }
+
+  .hw-name {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .hw-qty {
+    color: var(--brand);
+    margin-left: 0.25rem;
+  }
+
+  .hw-meta {
+    margin: 0.25rem 0 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 9rem 1fr 6.5rem;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.4rem 0;
+    font-size: 0.85rem;
+  }
+
+  .bar-label {
+    color: #374151;
+  }
+
+  .bar-track {
+    height: 0.75rem;
+    background: #eef2ff;
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--brand), #3b82f6);
+    border-radius: 9999px;
+  }
+
+  .bar-value {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: #111827;
+    font-weight: 600;
+  }
+
+  .vram-total {
+    margin: 0.75rem 0 0;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .calc-link-wrap {
+    margin: 0 0 2rem;
+  }
+
+  .calc-link {
+    font-weight: 600;
+    color: var(--brand);
+    text-decoration: none;
+  }
+
+  .calc-link:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 48rem) {
     .grid {
       grid-template-columns: 1fr;
+    }
+    .kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .bar-row {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+    .bar-value {
+      text-align: left;
     }
   }
 </style>

@@ -49,4 +49,17 @@ export const sizeResponseSchema = z.object({
   }),
 });
 
+export const calculationStepSchema = z.object({
+  step_id: z.string(),
+  label: z.string(),
+  formula: z.string(),
+  inputs: z.record(z.string(), z.union([z.string(), z.number()])),
+  expression: z.string(),
+  result: z.union([z.string(), z.number()]),
+  unit: z.string(),
+  spec_section: z.string(),
+});
+
+export type CalculationStep = z.infer<typeof calculationStepSchema>;
+
 export type SizeRequest = z.infer<typeof sizeRequestSchema>;
