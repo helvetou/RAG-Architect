@@ -18,9 +18,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
   const env = platform?.env;
   const db = env?.DB;
+  // Local dev injects a D1 proxy stub but has no real backing database: skip
+  // the production-only catalog guard and persistence when running under vite dev.
+  const dbAvailable = Boolean(db) && !import.meta.env.DEV;
 
   // RSK-004: confirm the D1 catalog is reachable before calling the sizing engine.
-  if (db) {
+  if (dbAvailable) {
     try {
       await db.prepare('SELECT id FROM hardware_catalog LIMIT 1').first();
       await db.prepare('SELECT id FROM model_registry LIMIT 1').first();
@@ -49,7 +52,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   // 21 CFR Part 11: persist the audit append-only (INSERT only; UPDATE/DELETE are
   // blocked by the DB triggers created in migration 0001). Fail loudly if the
   // immutable audit trail cannot be written.
-  if (db) {
+  if (dbAvailable) {
     try {
       const inputJson = JSON.stringify(parsed.data);
       const outputJson = JSON.stringify(result);
